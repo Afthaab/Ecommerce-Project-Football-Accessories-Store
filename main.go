@@ -17,6 +17,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.POST("/signup", controllers.Usersignup)
+	r.POST("/signup/otpvalidate", controllers.Otpvalidate)
 	r.POST("/signin", controllers.Usersignin)
 	r.Run(os.Getenv("PORT"))
 

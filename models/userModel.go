@@ -13,6 +13,7 @@ type User struct {
 	Password    string `JSON:"password" gorm:"not null" validate:"required"`
 	Otpverified bool   `JSON:"otpverified" gorm:"default:false"`
 	Isblocked   bool   `JSON:"Isblocked" gorm:"default:false"`
+	Otp         string   `JSON:"otp"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

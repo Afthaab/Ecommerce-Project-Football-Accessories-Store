@@ -1,14 +1,11 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"time"
 
+	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/initializers"
 	"github.com/afthab/e_commerce/models"
-	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -33,41 +30,55 @@ func Usersignup(c *gin.Context) {
 		return
 	}
 
-	//validating the email
+	//validating the email and sending otp
 	otp := initializers.Otpgeneration(datas.Email)
-	fmt.Println(otp)
 
-	//creating a token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"otp": otp,
-		"exp": time.Now().Add(time.Hour * 24 * 3).Unix(),
-	})
-	// Sign and get the complete encoded token as a string using the secret
-	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET")))
-	if err != nil {
+	DB := config.DBconnect()
+	result := DB.Create(&datas)
+	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
+			"message": result.Error.Error(),
 		})
 		return
 	}
-	//return response
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", tokenstring, 36000*24*30, "", "", false, true)
+	DB.Model(&datas).Where("email LIKE ?", datas.Email).Update("otp", otp)
+
+	//success message
 	c.JSON(200, gin.H{
-		"message": "Go to /signup/authentication",
+		"message": "Go to /signup/otpvalidate",
 	})
 
-	// DB := config.DBconnect()
-	// result := DB.Create(&datas)
-	// if result.Error != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"message": result.Error.Error(),
-	// 	})
-	// } else {
-	// 	c.JSON(http.StatusOK, gin.H{
-	// 		"message": "User created Successfully; Go to Sign In page",
-	// 	})
-	// }
+}
+
+func Otpvalidate(c *gin.Context) {
+	type Userotp struct {
+		Otp string
+	}
+	var datas Userotp
+	var userdata models.User
+	if c.Bind(&datas) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Bad Request",
+		})
+		return
+	}
+	DB := config.DBconnect()
+	result := DB.First(&userdata, "otp LIKE ?", datas.Otp)
+	// result := DB.Where("otp LIKE ?", datas.Otp).Find(&userdata)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		DB.First("otp LIKE ?", datas.Otp).Delete(&userdata)
+		c.JSON(http.StatusAccepted, gin.H{
+			"Error":   "Wrong OTP Register Once agian",
+			"Message": "Goto /signup/otpvalidate",
+		})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"Message": "Successfull Registered",
+	})
 
 }
 
