@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/afthab/e_commerce/initializers"
 	"github.com/afthab/e_commerce/models"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -30,8 +34,25 @@ func Usersignup(c *gin.Context) {
 	}
 
 	//validating the email
-	initializers.Otpgeneration(datas.Email)
+	otp := initializers.Otpgeneration(datas.Email)
+	fmt.Println(otp)
 
+	//creating a token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"otp": otp,
+		"exp": time.Now().Add(time.Hour * 24 * 3).Unix(),
+	})
+	// Sign and get the complete encoded token as a string using the secret
+	tokenstring, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	//return response
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", tokenstring, 36000*24*30, "", "", false, true)
 	c.JSON(200, gin.H{
 		"message": "Go to /signup/authentication",
 	})

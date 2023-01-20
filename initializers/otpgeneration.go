@@ -22,7 +22,7 @@ func genCaptchaCode() (string, error) {
 	return string(codes), nil
 }
 
-func Otpgeneration(emails string) {
+func Otpgeneration(emails string) string {
 	m := gomail.NewMessage()
 
 	// Set E-Mail sender
@@ -35,13 +35,13 @@ func Otpgeneration(emails string) {
 	m.SetHeader("Subject", "OTP to verify your Gmail")
 
 	//otp generation
-	Onetimepassword, err := genCaptchaCode()
+	onetimepassword, err := genCaptchaCode()
 	if err != nil {
 		panic(err)
 	}
 
 	// Set E-Mail body. You can set plain text or html with text/html
-	m.SetBody("text/plain", Onetimepassword+" is your OTP to register to our site. Thank you registering to our site. Happy Shopping :)")
+	m.SetBody("text/plain", onetimepassword+" is your OTP to register to our site. Thank you registering to our site. Happy Shopping :)")
 
 	// Settings for SMTP server
 	d := gomail.NewDialer("smtp.gmail.com", 587, os.Getenv("EMAIL"), os.Getenv("PASSWORD"))
@@ -57,5 +57,6 @@ func Otpgeneration(emails string) {
 	} else {
 		fmt.Println("OTP has been sent successfully")
 	}
+	return onetimepassword
 
 }
