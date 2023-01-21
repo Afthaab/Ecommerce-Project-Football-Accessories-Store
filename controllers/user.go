@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/afthab/e_commerce/auth"
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/initializers"
 	"github.com/afthab/e_commerce/models"
@@ -102,12 +103,15 @@ func Usersignin(c *gin.Context) {
 		})
 		return
 	}
-	if userdata.Isblocked == false {
+	if userdata.Isblocked == true {
 		c.JSON(http.StatusNotFound, gin.H{
 			"Error": "This user has been blocked by the admin",
 		})
 		return
 	}
+	token := auth.TokenGeneration(signindata.Email)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", token, 36000*24*30, "", "", false, true)
 	c.JSON(http.StatusAccepted, gin.H{
 		"Status":  "Signin Successful",
 		"Message": "Goto /home",
