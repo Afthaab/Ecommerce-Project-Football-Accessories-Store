@@ -16,9 +16,15 @@ func init() {
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.POST("/signup", controllers.Usersignup)
-	r.POST("/signup/otpvalidate", controllers.Otpvalidate)
-	r.POST("/signin", controllers.Usersignin)
+
+	//user
+	r.POST("/user/signup", controllers.Usersignup)
+	r.POST("/user/signup/otpvalidate", controllers.Otpvalidate)
+	r.POST("/user/signin", controllers.Usersignin)
+	//admin
+	r.POST("/admin/signin", controllers.Adminsignin)
+	r.GET("/admin/viewuser", controllers.Adminviewuser)
+	r.GET("/admin/adminpanel", controllers.Adminpanel)
 	r.Run(os.Getenv("PORT"))
 
 }

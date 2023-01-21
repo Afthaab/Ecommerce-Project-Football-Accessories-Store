@@ -12,8 +12,17 @@ type User struct {
 	Phone       string `JSON:"phone" gorm:"not null;unique" validate:"required,len=10"`
 	Password    string `JSON:"password" gorm:"not null" validate:"required"`
 	Otpverified bool   `JSON:"otpverified" gorm:"default:false"`
-	Isblocked   bool   `JSON:"Isblocked" gorm:"default:false"`
-	Otp         string   `JSON:"otp"`
+	Isblocked   bool   `JSON:"isblocked" gorm:"default:true"`
+	Otp         string `JSON:"otp"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type Admin struct {
+	Adminid   uint
+	Firstname string `JSON:"firstname"`
+	Lastname  string `JSON:"lastname"`
+	Email     string `JSON:"email"`
+	Phone     string `JSON:"phone"`
+	Password  string `JSON:"password"`
 }

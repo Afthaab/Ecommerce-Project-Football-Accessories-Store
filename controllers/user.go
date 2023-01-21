@@ -41,8 +41,8 @@ func Usersignup(c *gin.Context) {
 		})
 		return
 	}
+	//setting otp in the db
 	DB.Model(&datas).Where("email LIKE ?", datas.Email).Update("otp", otp)
-
 	//success message
 	c.JSON(200, gin.H{
 		"message": "Go to /signup/otpvalidate",
@@ -54,22 +54,21 @@ func Otpvalidate(c *gin.Context) {
 	type Userotp struct {
 		Otp string
 	}
-	var datas Userotp
+	var otpdata Userotp
 	var userdata models.User
-	if c.Bind(&datas) != nil {
+	if c.Bind(&otpdata) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Bad Request",
 		})
 		return
 	}
 	DB := config.DBconnect()
-	result := DB.First(&userdata, "otp LIKE ?", datas.Otp)
-	// result := DB.Where("otp LIKE ?", datas.Otp).Find(&userdata)
+	result := DB.First(&userdata, "otp LIKE ?", otpdata.Otp)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
-		DB.First("otp LIKE ?", datas.Otp).Delete(&userdata)
+		DB.First("otp LIKE ?", otpdata.Otp).Delete(&userdata)
 		c.JSON(http.StatusAccepted, gin.H{
 			"Error":   "Wrong OTP Register Once agian",
 			"Message": "Goto /signup/otpvalidate",
@@ -83,9 +82,35 @@ func Otpvalidate(c *gin.Context) {
 }
 
 func Usersignin(c *gin.Context) {
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Successful",
+	type Signinuser struct {
+		Email    string
+		Password string
+	}
+	var signindata Signinuser
+	var userdata models.User
+	if c.Bind(&signindata) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Bad Request",
+		})
+		return
+	}
+	DB := config.DBconnect()
+	result := DB.Raw("select * from users where email LIKE ? AND password LIKE ?", signindata.Email, signindata.Password).Scan(&userdata)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Message": result.Error.Error(),
+		})
+		return
+	}
+	if userdata.Isblocked == false {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "This user has been blocked by the admin",
+		})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{
+		"Status":  "Signin Successful",
+		"Message": "Goto /home",
 	})
 
 }
