@@ -2,11 +2,22 @@ package routes
 
 import (
 	"github.com/afthab/e_commerce/controllers"
+	"github.com/afthab/e_commerce/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
 func Userroutes(r *gin.Engine) {
-	r.POST("/user/signup", controllers.Usersignup)
-	r.POST("/user/signup/otpvalidate", controllers.Otpvalidate)
-	r.POST("/user/signin", controllers.Usersignin)
+	user := r.Group("/user")
+	{
+		user.POST("/signup", controllers.Usersignup)
+		user.POST("/signup/otpvalidate", controllers.Otpvalidate)
+		user.POST("/signin", controllers.Usersignin)
+
+		//routes with middlewares
+		user.GET("/profilepage", middlewares.UserAuth, controllers.GetUserProfile)
+		user.POST("/address", middlewares.UserAuth, controllers.AddAddress)
+		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
+		
+	}
+
 }

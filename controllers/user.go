@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/afthab/e_commerce/auth"
 	"github.com/afthab/e_commerce/config"
@@ -109,9 +110,10 @@ func Usersignin(c *gin.Context) {
 		})
 		return
 	}
-	token := auth.TokenGeneration(signindata.Email)
+	str := strconv.Itoa(int(userdata.Userid))
+	token := auth.TokenGeneration(str)
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", token, 36000*24*30, "", "", false, true)
+	c.SetCookie("UserAuth", token, 36000*24*30, "", "", false, true)
 	c.JSON(http.StatusAccepted, gin.H{
 		"Status":  "Signin Successful",
 		"Message": "Goto /home",

@@ -2,14 +2,22 @@ package routes
 
 import (
 	"github.com/afthab/e_commerce/controllers"
+	"github.com/afthab/e_commerce/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
 func Adminroutes(r *gin.Engine) {
-	r.POST("/admin/signin", controllers.Adminsignin)
-	r.GET("/admin/adminpanel", controllers.Adminpanel)
-	r.GET("/admin/viewuser", controllers.Adminviewuser)
-	r.POST("/admin/searchuser", controllers.Adminsearchuser)
-	r.PUT("/admin/blockuser", controllers.Adminblockuser)
-	r.PUT("/admin/unblockuser", controllers.Adminunblockuser)
+	admin := r.Group("/admin")
+	{
+		admin.POST("/signin", controllers.Adminsignin)
+
+		//routes with middlewares
+		admin.GET("/adminpanel", middlewares.AdminAuth, controllers.Adminpanel)
+		admin.GET("/proflepage", middlewares.AdminAuth, controllers.AdminProfilepage)
+		admin.GET("/viewuser", middlewares.AdminAuth, controllers.Adminviewuser)
+		admin.POST("/searchuser", middlewares.AdminAuth, controllers.Adminsearchuser)
+		admin.PUT("/searchuser/blockuser", middlewares.AdminAuth, controllers.Adminblockuser)
+		admin.PUT("/searchuser/unblockuser", middlewares.AdminAuth, controllers.Adminunblockuser)
+		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
+	}
 }

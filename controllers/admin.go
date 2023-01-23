@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/afthab/e_commerce/auth"
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/models"
 	"github.com/gin-gonic/gin"
@@ -29,6 +31,10 @@ func Adminsignin(c *gin.Context) {
 		})
 		return
 	}
+	str := strconv.Itoa(int(admindata.Adminid))
+	token := auth.TokenGeneration(str)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("AdminAuth", token, 36000*24*30, "", "", false, true)
 	c.JSON(http.StatusFound, gin.H{
 		"Message": "Admin signin successful",
 	})
