@@ -42,21 +42,26 @@ type Address struct {
 }
 
 type Size struct {
-	Sizeid   uint
-	Sizetype string
+	Sizeid   uint   `JSON:"sizeid" gorm:"primarykey;unique"`
+	Sizetype string `JSON:"sizetype" gorm:"not null"`
 }
 
 type Brand struct {
-	Brandid   uint
-	Brandname string
-}
-
-type Category struct {
-	Categoryid   uint
-	Categoryname string
+	Brandid   uint   `JSON:"brandid" gorm:"primarykey;unique"`
+	Brandname string `JSON:"brandname" gorm:"not null"`
 }
 
 type Team struct {
-	Teamid   uint
-	Teamname string
+	Teamid   uint   `JSON:"teamid" gorm:"primarykey;unique"`
+	Teamname string `JSON:"teamname" gorm:"not null"`
+}
+
+type Product struct {
+	Productid   uint   `JSON:"productid" gorm:"primarykey;unique"`
+	Productname string `JSON:"productname" gorm:"not null"`
+	Description string `JSON:"description" gorm:"not null"`
+	Stock       string `JSON:"stock" gorm:"not null"`
+	Image       string `JSON:"image" gorm:"not null"`
+	Cover       string `JSON:"cover" gorm:"not null"`
+	Price       uint   `JSON:"price" gorm:"not null"`
 }

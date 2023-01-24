@@ -19,6 +19,9 @@ func DBconnect() *gorm.DB {
 		&models.User{},
 		&models.Admin{},
 		&models.Address{},
+		&models.Brand{},
+		&models.Team{},
+		&models.Size{},
 	)
 	return DB
 }

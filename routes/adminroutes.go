@@ -20,5 +20,8 @@ func Adminroutes(r *gin.Engine) {
 		admin.PUT("/searchuser/blockuser", middlewares.AdminAuth, controllers.Adminblockuser)
 		admin.PUT("/searchuser/unblockuser", middlewares.AdminAuth, controllers.Adminunblockuser)
 		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
+		admin.POST("/addbrands", middlewares.AdminAuth, controllers.AddBrands)
+		admin.POST("/addsize", middlewares.AdminAuth, controllers.AddSize)
+		admin.POST("/addteams", middlewares.AdminAuth, controllers.AddTeams)
 	}
 }
