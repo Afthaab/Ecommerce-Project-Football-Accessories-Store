@@ -10,6 +10,7 @@ func Adminroutes(r *gin.Engine) {
 	admin := r.Group("/admin")
 	{
 		admin.POST("/signin", controllers.Adminsignin)
+		admin.GET("/signout", middlewares.AdminAuth, controllers.AdminSignout)
 
 		//routes with middlewares
 		admin.GET("/adminpanel", middlewares.AdminAuth, controllers.Adminpanel)

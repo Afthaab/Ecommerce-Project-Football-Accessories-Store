@@ -12,12 +12,13 @@ func Userroutes(r *gin.Engine) {
 		user.POST("/signup", controllers.Usersignup)
 		user.POST("/signup/otpvalidate", controllers.Otpvalidate)
 		user.POST("/signin", controllers.Usersignin)
+		user.GET("/signout", middlewares.UserAuth, controllers.UserSignout)
 
 		//routes with middlewares
 		user.GET("/profilepage", middlewares.UserAuth, controllers.GetUserProfile)
 		user.POST("/address", middlewares.UserAuth, controllers.AddAddress)
 		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
-		
+
 	}
 
 }

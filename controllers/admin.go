@@ -39,6 +39,14 @@ func Adminsignin(c *gin.Context) {
 		"Message": "Admin signin successful",
 	})
 }
+
+func AdminSignout(c *gin.Context) {
+	c.SetCookie("AdminAuth", "", -1, "", "", false, false)
+	c.JSON(200, gin.H{
+		"Message": "Admin Successfully Signed Out",
+	})
+}
+
 func Adminpanel(c *gin.Context) {
 
 	c.JSON(200, gin.H{

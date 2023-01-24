@@ -97,7 +97,7 @@ func Usersignin(c *gin.Context) {
 		return
 	}
 	DB := config.DBconnect()
-	result := DB.Raw("select * from users where email LIKE ? AND password LIKE ?", signindata.Email, signindata.Password).Scan(&userdata)
+	result := DB.First(&userdata, "email LIKE ? AND password LIKE ?", signindata.Email, signindata.Password)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"Message": result.Error.Error(),
@@ -119,4 +119,10 @@ func Usersignin(c *gin.Context) {
 		"Message": "Goto /home",
 	})
 
+}
+func UserSignout(c *gin.Context) {
+	c.SetCookie("UserAuth", "", -1, "", "", false, false)
+	c.JSON(200, gin.H{
+		"Message":"User Successfully Signed Out",
+	})
 }

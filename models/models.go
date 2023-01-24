@@ -40,3 +40,23 @@ type Address struct {
 	State     string `JSON:"state" gorm:"not null"`
 	Country   string `JSON:"country" gorm:"not null"`
 }
+
+type Size struct {
+	Sizeid   uint
+	Sizetype string
+}
+
+type Brand struct {
+	Brandid   uint
+	Brandname string
+}
+
+type Category struct {
+	Categoryid   uint
+	Categoryname string
+}
+
+type Team struct {
+	Teamid   uint
+	Teamname string
+}
