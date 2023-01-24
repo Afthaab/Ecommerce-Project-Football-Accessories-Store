@@ -21,6 +21,7 @@ func main() {
 
 	routes.Userroutes(R)
 	routes.Adminroutes(R)
+	routes.OpenRoutes(R)
 
 	R.Run(os.Getenv("PORT"))
 

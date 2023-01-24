@@ -28,7 +28,7 @@ type Admin struct {
 }
 type Address struct {
 	Addressid uint   `JSON:"addressid" gorm:"primarykey;unique"`
-	Userid    uint   `JSON:"userid" gorm:"foriegnkey"`
+	Userid    uint   `JSON:"userid" gorm:"foreignKey:UserRefer"`
 	Name      string `JSON:"name" gorm:"not null"`
 	Phoneno   string `JSON:"phoneno" gorm:"not null"`
 	Houseno   string `JSON:"houseno" gorm:"not null"`
@@ -60,8 +60,11 @@ type Product struct {
 	Productid   uint   `JSON:"productid" gorm:"primarykey;unique"`
 	Productname string `JSON:"productname" gorm:"not null"`
 	Description string `JSON:"description" gorm:"not null"`
-	Stock       string `JSON:"stock" gorm:"not null"`
+	Stock       uint   `JSON:"stock" gorm:"not null"`
 	Image       string `JSON:"image" gorm:"not null"`
 	Cover       string `JSON:"cover" gorm:"not null"`
 	Price       uint   `JSON:"price" gorm:"not null"`
+	Teamid      uint   `JSON:"teamid" gorm:"foreignKey:TeamRefer"`
+	Brandid     uint   `JSON:"brandid" gorm:"foreignKey:BrandRefer"`
+	Sizeid      uint   `JSON:"sizeid" gorm:"foreignKey:SizeRefer"`
 }

@@ -22,6 +22,7 @@ func DBconnect() *gorm.DB {
 		&models.Brand{},
 		&models.Team{},
 		&models.Size{},
+		&models.Product{},
 	)
 	return DB
 }
