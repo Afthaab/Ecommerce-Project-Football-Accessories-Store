@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"net/http"
 	"path/filepath"
 	"strconv"
 
@@ -36,7 +35,7 @@ func Addproducts(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Raw("SELECT sizeid FROM sizes WHERE sizetype = ?", size).Scan(&sizedata)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error":   "Size is not found please verify",
 			"Message": "If its a new size add the size first",
 		})
@@ -46,7 +45,7 @@ func Addproducts(c *gin.Context) {
 	var teamdata models.Team
 	result1 := DB.Raw("SELECT teamid FROM teams WHERE teamname = ?", team).Scan(&teamdata)
 	if result1.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error":   "Team is not found please verify",
 			"Message": "If its a new Team add the Team first",
 		})
@@ -56,13 +55,12 @@ func Addproducts(c *gin.Context) {
 	var brandata models.Brand
 	result2 := DB.Raw("SELECT brandid FROM brands WHERE brandname = ?", brand).Scan(&brandata)
 	if result2.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error":   "Team is not found please verify",
 			"Message": "If its a new Team add the Team first",
 		})
 		return
 	}
-
 	addproduct := models.Product{
 		Productname: productname,
 		Description: description,
@@ -76,7 +74,7 @@ func Addproducts(c *gin.Context) {
 	}
 	result3 := DB.Create(&addproduct)
 	if result3.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(500, gin.H{
 			"Error": result3.Error.Error(),
 		})
 		return
@@ -95,7 +93,7 @@ func AddBrands(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Create(&addbrand)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(500, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -113,7 +111,7 @@ func AddSize(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Create(&addsize)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(500, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -132,7 +130,7 @@ func AddTeams(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Create(&addteam)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(500, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -142,11 +140,14 @@ func AddTeams(c *gin.Context) {
 	})
 }
 
-func ViewProducts(c *gin.Context)  {
-	DB:= config.DBconnect()
-	DB.Raw("SELECT productname,description, stock,image,cover")
+func ViewProducts(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"Message": "View Products Page",
+	})
 }
 
-func ViewAllProductConstraints(c *gin.Context)  {
-	
+func ViewAllProductConstraints(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"Message": "View all products constraints page",
+	})
 }

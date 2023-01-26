@@ -16,8 +16,10 @@ func Userroutes(r *gin.Engine) {
 
 		//routes with middlewares
 		user.GET("/profilepage", middlewares.UserAuth, controllers.GetUserProfile)
-		user.POST("/address", middlewares.UserAuth, controllers.AddAddress)
+
+		user.POST("/profilepage/addaddress", middlewares.UserAuth, controllers.AddAddress)
 		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
+		user.PUT("/profilepage/editaddress", middlewares.UserAuth, controllers.EditAddress)
 
 	}
 

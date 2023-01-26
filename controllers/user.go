@@ -19,66 +19,73 @@ func Usersignup(c *gin.Context) {
 	var datas models.User
 
 	if c.Bind(&datas) != nil { //Unmarshelling the Json Data
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Bad Request",
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
-	validationerr := validate.Struct(datas) //Validating the struct using Validator Package
-	if validationerr != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": validationerr.Error(),
+	Validationerr := validate.Struct(datas) //Validating the struct using Validator Package
+	if Validationerr != nil {
+		c.JSON(400, gin.H{
+			"Error": Validationerr.Error(),
 		})
 		return
 	}
 
 	//validating the email and sending otp
 	otp := initializers.Otpgeneration(datas.Email)
-
+	err := datas.HashPassword(datas.Password)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": err,
+		})
+		return
+	}
 	DB := config.DBconnect()
 	result := DB.Create(&datas)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": result.Error.Error(),
+		c.JSON(404, gin.H{
+			"message": result.Error.Error(), //404 because record not found
 		})
 		return
 	}
 	//setting otp in the db
 	DB.Model(&datas).Where("email LIKE ?", datas.Email).Update("otp", otp)
 	//success message
-	c.JSON(200, gin.H{
-		"message": "Go to /signup/otpvalidate",
+	c.JSON(202, gin.H{
+		"message": "Go to /signup/otpvalidate", //202 success but there still one more process
 	})
 
 }
 
 func Otpvalidate(c *gin.Context) {
 	type Userotp struct {
-		Otp string
+		Otp   string
+		Email string
 	}
 	var otpdata Userotp
 	var userdata models.User
 	if c.Bind(&otpdata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Bad Request",
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
 	DB := config.DBconnect()
-	result := DB.First(&userdata, "otp LIKE ?", otpdata.Otp)
+	result := DB.First(&userdata, "otp LIKE ? AND email LIKE ?", otpdata.Otp, otpdata.Email)
 	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
-		DB.First("otp LIKE ?", otpdata.Otp).Delete(&userdata)
-		c.JSON(http.StatusAccepted, gin.H{
+		DB.Last(&userdata).Delete(&userdata)
+		c.JSON(422, gin.H{
 			"Error":   "Wrong OTP Register Once agian",
-			"Message": "Goto /signup/otpvalidate",
+			"Message": "Goto /signup/otpvalidate", //422 Uprocessable entity
 		})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{
-		"Message": "Successfull Registered",
+	c.JSON(200, gin.H{
+		"Message": "New User Successfully Registered",
 	})
 
 }
@@ -91,21 +98,27 @@ func Usersignin(c *gin.Context) {
 	var signindata Signinuser
 	var userdata models.User
 	if c.Bind(&signindata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Message": "Bad Request",
+		c.JSON(404, gin.H{
+			"Message": "Could not bind the JSON data",
 		})
 		return
 	}
 	DB := config.DBconnect()
-	result := DB.First(&userdata, "email LIKE ? AND password LIKE ?", signindata.Email, signindata.Password)
+	result := DB.First(&userdata, "email LIKE ?", signindata.Email)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Message": result.Error.Error(),
 		})
 		return
 	}
-	if userdata.Isblocked == true {
-		c.JSON(http.StatusNotFound, gin.H{
+	checkcredential := userdata.CheckPassword(signindata.Password)
+	if checkcredential != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		c.Abort()
+		return
+	}
+	if userdata.Isblocked {
+		c.JSON(404, gin.H{
 			"Error": "This user has been blocked by the admin",
 		})
 		return
@@ -114,7 +127,7 @@ func Usersignin(c *gin.Context) {
 	token := auth.TokenGeneration(str)
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("UserAuth", token, 36000*24*30, "", "", false, true)
-	c.JSON(http.StatusAccepted, gin.H{
+	c.JSON(200, gin.H{
 		"Status":  "Signin Successful",
 		"Message": "Goto /home",
 	})
@@ -123,6 +136,6 @@ func Usersignin(c *gin.Context) {
 func UserSignout(c *gin.Context) {
 	c.SetCookie("UserAuth", "", -1, "", "", false, false)
 	c.JSON(200, gin.H{
-		"Message":"User Successfully Signed Out",
+		"Message": "User Successfully Signed Out",
 	})
 }

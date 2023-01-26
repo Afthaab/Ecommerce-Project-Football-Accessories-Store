@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -12,7 +14,7 @@ type User struct {
 	Phone       string `JSON:"phone" gorm:"not null;unique" validate:"required,len=10"`
 	Password    string `JSON:"password" gorm:"not null" validate:"required"`
 	Otpverified bool   `JSON:"otpverified" gorm:"default:false"`
-	Isblocked   bool   `JSON:"isblocked" gorm:"default:true"`
+	Isblocked   bool   `JSON:"isblocked" gorm:"default:false"`
 	Otp         string `JSON:"otp"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -64,7 +66,23 @@ type Product struct {
 	Image       string `JSON:"image" gorm:"not null"`
 	Cover       string `JSON:"cover" gorm:"not null"`
 	Price       uint   `JSON:"price" gorm:"not null"`
-	Teamid      uint   `JSON:"teamid" gorm:"foreignKey:TeamRefer"`
-	Brandid     uint   `JSON:"brandid" gorm:"foreignKey:BrandRefer"`
-	Sizeid      uint   `JSON:"sizeid" gorm:"foreignKey:SizeRefer"`
+	Teamid      uint   `gorm:"foreignkey:Teamid;references:teams"`
+	Brandid     uint   `gorm:"foreignkey:Brandid;references:brands"`
+	Sizeid      uint   `gorm:"foreignkey:Sizeid;references:sizes"`
+}
+
+func (user *User) HashPassword(password string) error {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return err
+	}
+	user.Password = string(bytes)
+	return nil
+}
+func (user *User) CheckPassword(providedPassword string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(providedPassword))
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }

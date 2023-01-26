@@ -18,15 +18,15 @@ func Adminsignin(c *gin.Context) {
 	var signindata Signinadmin
 	var admindata models.Admin
 	if c.Bind(&signindata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Message": "Bad Request",
+		c.JSON(400, gin.H{
+			"Message": "Could not bind the JSON Data",
 		})
 		return
 	}
 	DB := config.DBconnect()
 	result := DB.First(&admindata, "email LIKE ? AND password LIKE ?", signindata.Email, signindata.Password)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -35,7 +35,7 @@ func Adminsignin(c *gin.Context) {
 	token := auth.TokenGeneration(str)
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("AdminAuth", token, 36000*24*30, "", "", false, true)
-	c.JSON(http.StatusFound, gin.H{
+	c.JSON(200, gin.H{
 		"Message": "Admin signin successful",
 	})
 }
@@ -79,14 +79,14 @@ func Adminsearchuser(c *gin.Context) {
 	var searchdata Admindata
 	var userdata Viewdata
 	if c.Bind(&searchdata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Bad Request",
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON data",
 		})
 	}
 	DB := config.DBconnect()
 	result := DB.Raw("SELECT userid,firstname,lastname,email,phone,isblocked FROM users WHERE userid = ?", searchdata.Userid).Scan(&userdata)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -100,21 +100,21 @@ func Adminblockuser(c *gin.Context) {
 	var userdata Viewdata
 	var searchdata Admindata
 	if c.Bind(&searchdata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Bad Request",
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
 	DB := config.DBconnect()
 	result := DB.Raw("UPDATE users SET isblocked = true WHERE userid = ?", searchdata.Userid).Scan(&userdata)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusFound, gin.H{
-		"Message": "Success",
+	c.JSON(200, gin.H{
+		"Message": "Successfully blocked the User",
 	})
 
 }
@@ -122,21 +122,21 @@ func Adminunblockuser(c *gin.Context) {
 	var userdata Viewdata
 	var searchdata Admindata
 	if c.Bind(&searchdata) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Bad Request",
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
 	DB := config.DBconnect()
 	result := DB.Raw("UPDATE users SET isblocked = false WHERE userid = ?", searchdata.Userid).Scan(&userdata)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusFound, gin.H{
-		"Message": "Success",
+	c.JSON(200, gin.H{
+		"Message": "Successfully unblocked the User",
 	})
 
 }
