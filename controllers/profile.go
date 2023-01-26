@@ -34,45 +34,26 @@ func GetUserProfile(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"Profile Details": userdata,
 	})
+
 }
 
-func AddAddress(c *gin.Context) {
+func EditUserProfile(c *gin.Context) {
 	id, err := strconv.Atoi(c.GetString("userid"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": "Error in string conversion",
 		})
 	}
-	var addressdata models.Address
-	if c.Bind(&addressdata) != nil {
+	var userdata models.User
+	if c.Bind(&userdata) != nil {
 		c.JSON(400, gin.H{
-			"Error": "Error in Binding the JSON",
-		})
-	}
-	addressdata.Userid = uint(id)
-	DB := config.DBconnect()
-	result := DB.Create(&addressdata)
-	if result.Error != nil {
-		c.JSON(500, gin.H{
-			"Error": result.Error.Error(),
+			"Error": "Unable to Bind JSON data",
 		})
 		return
 	}
-	c.JSON(200, gin.H{
-		"Message": "Address added succesfully",
-	})
-
-}
-func ShowAddress(c *gin.Context) {
-	id, err := strconv.Atoi(c.GetString("userid"))
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
-		})
-	}
-	var addressdata []models.Address
+	userdata.Userid = uint(id)
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT * FROM addresses WHERE userid = ?", id).Scan(&addressdata)
+	result := DB.Model(&userdata).Updates(models.User{Firstname: userdata.Firstname, Lastname: userdata.Lastname, Phone: userdata.Phone})
 	if result.Error != nil {
 		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
@@ -80,43 +61,11 @@ func ShowAddress(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"User Addresses": addressdata,
+		"Message": "Profile Updated Successfully",
 	})
 
 }
 
-func EditAddress(c *gin.Context) {
-	addressid := c.Query("addressid")
-	var addressdata models.Address
-	if c.Bind(&addressdata) != nil {
-		c.JSON(404, gin.H{
-			"Error": "Error in binding JSON data",
-		})
-		return
-	}
-	str, err := strconv.Atoi(addressid)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"Error": err,
-		})
-		return
-	}
-	addressdata.Addressid = uint(str)
-	DB := config.DBconnect()
-	result := DB.Model(&addressdata).Updates(models.Address{Name: addressdata.Name, Phoneno: addressdata.Phoneno, Houseno: addressdata.Houseno, Area: addressdata.Area, Landmark: addressdata.Landmark, City: addressdata.City, Pincode: addressdata.Pincode, District: addressdata.District, State: addressdata.State, Country: addressdata.Country})
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
-		})
-		return
-	}
-	c.JSON(200, gin.H{
-		"Message": "Successfully Updated the Address",
-	})
-
-}
-
-// Admin Profile fuctions
 func AdminProfilepage(c *gin.Context) {
 	id, err := strconv.Atoi(c.GetString("adminid"))
 	if err != nil {
