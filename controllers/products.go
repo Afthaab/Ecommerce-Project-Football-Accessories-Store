@@ -1,93 +1,46 @@
 package controllers
 
 import (
-	"path/filepath"
-	"strconv"
-
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/models"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func Addproducts(c *gin.Context) {
-	productname := c.PostForm("product_name")
-	description := c.PostForm("description")
-	stockconv := c.PostForm("stock")
-	stock, _ := strconv.Atoi(stockconv)
-	team := c.PostForm("team_name")
-	brand := c.PostForm("brand_name")
-	size := c.PostForm("size_type")
-	priceconv := c.PostForm("price")
-	price, _ := strconv.Atoi(priceconv)
-
-	imagepath, _ := c.FormFile("image")
-	extension := filepath.Ext(imagepath.Filename)
-	image := uuid.New().String() + extension
-	c.SaveUploadedFile(imagepath, "./public/images"+image)
-
-	coverpath, _ := c.FormFile("cover")
-	extension1 := filepath.Ext(coverpath.Filename)
-	cover := uuid.New().String() + extension1
-	c.SaveUploadedFile(coverpath, "./public/images"+cover)
-
-	var sizedata models.Size
+	var addproduct models.Product
+	err := c.Bind(&addproduct)
+	if err != nil { //Unmarshelling the Json Data
+		c.JSON(400, gin.H{
+			"Error": err,
+		})
+		return
+	}
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT sizeid FROM sizes WHERE sizetype = ?", size).Scan(&sizedata)
+	result := DB.Create(&addproduct)
 	if result.Error != nil {
 		c.JSON(404, gin.H{
-			"Error":   "Size is not found please verify",
-			"Message": "If its a new size add the size first",
-		})
-		return
-	}
-
-	var teamdata models.Team
-	result1 := DB.Raw("SELECT teamid FROM teams WHERE teamname = ?", team).Scan(&teamdata)
-	if result1.Error != nil {
-		c.JSON(404, gin.H{
-			"Error":   "Team is not found please verify",
-			"Message": "If its a new Team add the Team first",
-		})
-		return
-	}
-
-	var brandata models.Brand
-	result2 := DB.Raw("SELECT brandid FROM brands WHERE brandname = ?", brand).Scan(&brandata)
-	if result2.Error != nil {
-		c.JSON(404, gin.H{
-			"Error":   "Team is not found please verify",
-			"Message": "If its a new Team add the Team first",
-		})
-		return
-	}
-	addproduct := models.Product{
-		Productname: productname,
-		Description: description,
-		Stock:       uint(stock),
-		Price:       uint(price),
-		Image:       image,
-		Cover:       cover,
-		Teamid:      teamdata.Teamid,
-		Brandid:     brandata.Brandid,
-		Sizeid:      sizedata.Sizeid,
-	}
-	result3 := DB.Create(&addproduct)
-	if result3.Error != nil {
-		c.JSON(500, gin.H{
-			"Error": result3.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "Product had added successfully",
+		"Message": "Successfully Added the Product",
 	})
 
 }
 
 func ViewProducts(c *gin.Context) {
+	var viewproducts []models.Product
+	DB := config.DBconnect()
+	result := DB.Raw("SELECT productname,description,stock,price,brands.brands,teams.teams,sizes.sizes FROM products INNER JOIN brands ON products.brandid=brands.brandid INNER JOIN teams ON products.teamid=teams.teamid INNER JOIN sizes ON products.sizeid=sizes.sizeid").Scan(&viewproducts)
+	if result.Error != nil {
+		c.JSON(400, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
 	c.JSON(200, gin.H{
-		"Message": "View Products Page",
+		"Products": viewproducts,
 	})
 }
 

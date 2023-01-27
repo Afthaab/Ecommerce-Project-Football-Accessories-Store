@@ -42,33 +42,33 @@ type Address struct {
 	State     string `JSON:"state" gorm:"not null"`
 	Country   string `JSON:"country" gorm:"not null"`
 }
-
-type Size struct {
-	Sizeid   uint   `JSON:"sizeid" gorm:"primarykey;unique"`
-	Sizetype string `JSON:"sizetype" gorm:"not null"`
-}
-
-type Brand struct {
-	Brandid   uint   `JSON:"brandid" gorm:"primarykey;unique"`
-	Brandname string `JSON:"brandname" gorm:"not null"`
-}
-
-type Team struct {
-	Teamid   uint   `JSON:"teamid" gorm:"primarykey;unique"`
-	Teamname string `JSON:"teamname" gorm:"not null"`
-}
-
 type Product struct {
 	Productid   uint   `JSON:"productid" gorm:"primarykey;unique"`
 	Productname string `JSON:"productname" gorm:"not null"`
 	Description string `JSON:"description" gorm:"not null"`
 	Stock       uint   `JSON:"stock" gorm:"not null"`
-	Image       string `JSON:"image" gorm:"not null"`
-	Cover       string `JSON:"cover" gorm:"not null"`
 	Price       uint   `JSON:"price" gorm:"not null"`
-	Teamid      uint   `gorm:"foreignkey:Teamid;references:teams"`
-	Brandid     uint   `gorm:"foreignkey:Brandid;references:brands"`
-	Sizeid      uint   `gorm:"foreignkey:Sizeid;references:sizes"`
+	Teamid      uint   `JSON:"teamid"`
+	Brandid     uint   `JSON:"brandid"`
+	Sizeid      uint   `JSON:"sizeid"`
+}
+
+type Size struct {
+	Product  Product `gorm:"foreignkey:Sizeid"`
+	Sizeid   uint    `JSON:"sizeid" gorm:"primarykey"`
+	Sizetype string  `JSON:"sizetype" gorm:"not null"`
+}
+
+type Brand struct {
+	Product   Product `gorm:"foreignkey:Brandid"`
+	Brandid   uint    `JSON:"brandid" gorm:"primarykey"`
+	Brandname string  `JSON:"brandname" gorm:"not null"`
+}
+
+type Team struct {
+	Product  Product `gorm:"foreignkey:Teamid"`
+	Teamid   uint    `JSON:"teamid" gorm:"primarykey"`
+	Teamname string  `JSON:"teamname" gorm:"not null"`
 }
 
 func (user *User) HashPassword(password string) error {

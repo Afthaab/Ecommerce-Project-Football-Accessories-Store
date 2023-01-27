@@ -34,5 +34,7 @@ func Adminroutes(r *gin.Engine) {
 
 		//product management
 		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
+		admin.GET("/viewproducts", middlewares.AdminAuth, controllers.ViewProducts)
+
 	}
 }
