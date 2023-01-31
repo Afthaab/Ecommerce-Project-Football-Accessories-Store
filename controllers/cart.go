@@ -53,15 +53,22 @@ func AddToCart(c *gin.Context) {
 }
 
 func ViewCart(c *gin.Context) {
+	id, err := strconv.Atoi(c.GetString("userid"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"Error": "Error in string conversion",
+		})
+	}
 	type cartdata struct {
 		Productname string
 		Quantity    uint
 		Totalprice  uint
 		Image       string
+		Price       string
 	}
 	var datas []cartdata
 	DB := config.DBconnect()
-	result := DB.Raw("select carts.id, products.productname, carts.quantity, carts.amount, carts.totalprice, images.image FROM products INNER JOIN carts ON products.productid=carts.pid INNER JOIN images ON products.productid=images.pid").Scan(&datas)
+	result := DB.Raw("select products.productname, carts.quantity, carts.price, carts.totalprice FROM carts INNER JOIN products ON products.productid=carts.pid WHERE cartid = ?", id).Scan(&datas)
 	if result.Error != nil {
 		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
@@ -73,9 +80,4 @@ func ViewCart(c *gin.Context) {
 	})
 
 }
-func EditCart(c *gin.Context)  {
-	// var cartdata models.Cart
-	// DB:= config.DBconnect()
-	// DB.Model(&cartdata).Updates(models.User{Firstname: userdata.Firstname, Lastname: userdata.Lastname, Phone: userdata.Phone})
-	
-}
+

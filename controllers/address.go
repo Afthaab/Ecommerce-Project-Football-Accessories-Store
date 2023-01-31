@@ -21,8 +21,9 @@ func AddAddress(c *gin.Context) {
 			"Error": "Error in Binding the JSON",
 		})
 	}
-	addressdata.Uid = uint(id)
 	DB := config.DBconnect()
+	DB.Model(&models.Address{}).Where("uid = ?", id).Update("defaultadd", false)
+	addressdata.Uid = uint(id)
 	result := DB.Create(&addressdata)
 	if result.Error != nil {
 		c.JSON(500, gin.H{
@@ -30,43 +31,54 @@ func AddAddress(c *gin.Context) {
 		})
 		return
 	}
+	DB.Model(&models.Address{}).Where("addressid = ?", addressdata.Addressid).Update("defaultadd", true)
 	c.JSON(200, gin.H{
 		"Message": "Address added succesfully",
 	})
 
 }
 func ShowAddress(c *gin.Context) {
-	searchid := c.Query("addressid")
+	searchid, _ := strconv.Atoi(c.Query("addressid"))
 	id, err := strconv.Atoi(c.GetString("userid"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": "Error in string conversion",
 		})
 	}
-	var addressdata []models.Address
+
+	type addressdata struct {
+		Name     string
+		Phoneno  string
+		Houseno  string
+		Area     string
+		Landmark string
+		City     string
+		Pincode  string
+		District string
+		State    string
+		Country  string
+	}
+	var datas []addressdata
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT * FROM addresses WHERE userid = ?", id).Scan(&addressdata)
-	if searchid != "" {
-		result1 := DB.Raw("SELECT * FROM addresses WHERE userid = ? AND addressid = ?", id, searchid).Scan(&addressdata)
+	if searchid != 0 {
+		result1 := DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE uid = ? AND addressid = ?", id, searchid).Scan(&datas)
 		if result1.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result1.Error.Error(),
 			})
 			return
 		}
-		c.JSON(200, gin.H{
-			"Address": addressdata,
-		})
-		return
-	}
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
-		})
-		return
+	} else {
+		result := DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE uid = ?", id).Scan(&datas)
+		if result.Error != nil {
+			c.JSON(404, gin.H{
+				"Error": result.Error.Error(),
+			})
+			return
+		}
 	}
 	c.JSON(200, gin.H{
-		"User Addresses": addressdata,
+		"User Addresses": datas,
 	})
 
 }

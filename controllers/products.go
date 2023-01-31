@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"strconv"
@@ -35,6 +36,8 @@ func Addproducts(c *gin.Context) {
 }
 
 func ViewProducts(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	offset, _ := strconv.Atoi(c.Query("offset"))
 	type viewproducts struct {
 		Productname string
 		Description string
@@ -46,19 +49,31 @@ func ViewProducts(c *gin.Context) {
 		Images      string
 	}
 	var datas []viewproducts
-	// var viewproducts models.Product
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname, string_agg(images.image, ', ') as images FROM products RIGHT JOIN teams ON products.teamid=teams.id RIGHT JOIN sizes ON products.sizeid=sizes.id RIGHT JOIN brands ON products.brandid=brands.id RIGHT JOIN images on products.productid=images.pid GROUP BY products.productid, teams.teamname, sizes.sizetype, brands.brandname;").Scan(&datas)
+	query := "SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname, string_agg(images.image, ', ') as images FROM products RIGHT JOIN teams ON products.teamid=teams.id RIGHT JOIN sizes ON products.sizeid=sizes.id RIGHT JOIN brands ON products.brandid=brands.id RIGHT JOIN images on products.productid=images.pid GROUP BY products.productid, teams.teamname, sizes.sizetype, brands.brandname"
+
+	if limit != 0 || offset != 0 {
+		if limit == 0 {
+			query = fmt.Sprintf("%s OFFSET %d", query, offset)
+		} else if offset == 0 {
+			query = fmt.Sprintf("%s LIMIT %d", query, limit)
+		} else {
+			query = fmt.Sprintf("%s LIMIT %d OFFSET %d", query, limit, offset)
+		}
+	}
+	result := DB.Raw(query).Scan(&datas)
 	if result.Error != nil {
 		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
+
 	c.JSON(200, gin.H{
 		"Products": datas,
 	})
 }
+
 func AddImages(c *gin.Context) {
 	imagepath, _ := c.FormFile("image")
 	extension := filepath.Ext(imagepath.Filename)

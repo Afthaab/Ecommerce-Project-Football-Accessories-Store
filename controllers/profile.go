@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/initializers"
 	"github.com/afthab/e_commerce/models"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Profiledata struct {
@@ -17,117 +19,117 @@ type Profiledata struct {
 }
 
 func GetUserProfile(c *gin.Context) {
-	// 	id, err := strconv.Atoi(c.GetString("userid"))
-	// 	if err != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Error in string conversion",
-	// 		})
-	// 	}
-	// 	var userdata Profiledata
-	// 	DB := config.DBconnect()
-	// 	result := DB.Raw("SELECT firstname,lastname,email,phone FROM users WHERE userid =?", id).Scan(&userdata)
-	// 	if result.Error != nil {
-	// 		c.JSON(404, gin.H{
-	// 			"Error": result.Error.Error(),
-	// 		})
-	// 		return
-	// 	}
-	// 	c.JSON(200, gin.H{
-	// 		"Profile Details": userdata,
-	// 	})
+	id, err := strconv.Atoi(c.GetString("userid"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"Error": "Error in string conversion",
+		})
+	}
+	var userdata Profiledata
+	DB := config.DBconnect()
+	result := DB.Raw("SELECT firstname,lastname,email,phone FROM users WHERE userid =?", id).Scan(&userdata)
+	if result.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"Profile Details": userdata,
+	})
 
-	// }
+}
 
-	// func EditUserProfile(c *gin.Context) {
-	// 	id, err := strconv.Atoi(c.GetString("userid"))
-	// 	if err != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Error in string conversion",
-	// 		})
-	// 	}
-	// 	var userdata models.User
-	// 	if c.Bind(&userdata) != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Unable to Bind JSON data",
-	// 		})
-	// 		return
-	// 	}
-	// 	userdata.Userid = uint(id)
-	// 	DB := config.DBconnect()
-	// 	result := DB.Model(&userdata).Updates(models.User{Firstname: userdata.Firstname, Lastname: userdata.Lastname, Phone: userdata.Phone})
-	// 	if result.Error != nil {
-	// 		c.JSON(404, gin.H{
-	// 			"Error": result.Error.Error(),
-	// 		})
-	// 		return
-	// 	}
-	// 	c.JSON(200, gin.H{
-	// 		"Message": "Profile Updated Successfully",
-	// 	})
+func EditUserProfile(c *gin.Context) {
+	id, err := strconv.Atoi(c.GetString("userid"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"Error": "Error in string conversion",
+		})
+	}
+	var userdata models.User
+	if c.Bind(&userdata) != nil {
+		c.JSON(400, gin.H{
+			"Error": "Unable to Bind JSON data",
+		})
+		return
+	}
+	userdata.Userid = uint(id)
+	DB := config.DBconnect()
+	result := DB.Model(&userdata).Updates(models.User{Firstname: userdata.Firstname, Lastname: userdata.Lastname, Phone: userdata.Phone})
+	if result.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"Message": "Profile Updated Successfully",
+	})
 
-	// }
+}
 
-	// func ChangePasswordInProfile(c *gin.Context) {
-	// 	id, err := strconv.Atoi(c.GetString("userid"))
-	// 	if err != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Error in string conversion",
-	// 		})
-	// 	}
-	// 	type passwordata struct {
-	// 		Oldpassword string
-	// 		Password1   string
-	// 		Password2   string
-	// 	}
-	// 	var datas passwordata
-	// 	var userdata models.User
-	// 	if c.Bind(&datas) != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Could not bind the JSON data",
-	// 		})
-	// 		return
-	// 	}
-	// 	bytes, err := bcrypt.GenerateFromPassword([]byte(datas.Oldpassword), 14)
-	// 	if err != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": "Error in Hashing the password",
-	// 		})
-	// 		return
-	// 	}
-	// 	datas.Oldpassword = string(bytes)
-	// 	fmt.Println(datas.Oldpassword)
-	// 	DB := config.DBconnect()
-	// 	result := DB.Raw("userid = ?", id)
-	// 	if result.Error != nil {
-	// 		c.JSON(404, gin.H{
-	// 			"Error": "Incorrect Old password",
-	// 		})
-	// 		return
-	// 	}
-	// 	fmt.Println(userdata.Password)
-	// 	result1 := bcrypt.CompareHashAndPassword([]byte(userdata.Password), []byte(datas.Oldpassword))
-	// 	if result1 != nil {
-	// 		c.JSON(404, gin.H{
-	// 			"Error": "there is the result",
-	// 		})
-	// 		return
-	// 	}
-	// 	if datas.Password1 != datas.Password2 {
-	// 		c.JSON(404, gin.H{
-	// 			"Error": "Entered Password does not matches try again! ",
-	// 		})
-	// 		return
-	// 	}
-	// 	result2 := DB.Model(&userdata).Updates(models.User{Password: datas.Password1})
-	// 	if result2.Error != nil {
-	// 		c.JSON(400, gin.H{
-	// 			"Error": result.Error.Error(),
-	// 		})
-	// 		return
-	// 	}
-	// 	c.JSON(200, gin.H{
-	// 		"Message": "Successfully Updated the Password",
-	// 	})
+func ChangePasswordInProfile(c *gin.Context) {
+	id, err := strconv.Atoi(c.GetString("userid"))
+	if err != nil {
+		c.JSON(400, gin.H{
+			"Error": "Error in string conversion",
+		})
+	}
+	type passwordata struct {
+		Oldpassword string
+		Password1   string
+		Password2   string
+	}
+	var datas passwordata
+	var userdata models.User
+	if c.Bind(&datas) != nil {
+		c.JSON(400, gin.H{
+			"Error": "Could not bind the JSON data",
+		})
+		return
+	}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(datas.Oldpassword), 14)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"Error": "Error in Hashing the password",
+		})
+		return
+	}
+	datas.Oldpassword = string(bytes)
+	fmt.Println(datas.Oldpassword)
+	DB := config.DBconnect()
+	result := DB.Raw("userid = ?", id)
+	if result.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": "Incorrect Old password",
+		})
+		return
+	}
+	fmt.Println(userdata.Password)
+	result1 := bcrypt.CompareHashAndPassword([]byte(userdata.Password), []byte(datas.Oldpassword))
+	if result1 != nil {
+		c.JSON(404, gin.H{
+			"Error": "there is the result",
+		})
+		return
+	}
+	if datas.Password1 != datas.Password2 {
+		c.JSON(404, gin.H{
+			"Error": "Entered Password does not matches try again! ",
+		})
+		return
+	}
+	result2 := DB.Model(&userdata).Updates(models.User{Password: datas.Password1})
+	if result2.Error != nil {
+		c.JSON(400, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"Message": "Successfully Updated the Password",
+	})
 
 }
 

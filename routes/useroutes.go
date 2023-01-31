@@ -29,6 +29,8 @@ func Userroutes(r *gin.Engine) {
 		user.POST("/addtocart", middlewares.UserAuth, controllers.AddToCart)
 		user.GET("/viewcart", middlewares.UserAuth, controllers.ViewCart)
 
+		user.GET("/checkoutpage", middlewares.UserAuth, controllers.CheckOut)
+
 	}
 
 }
