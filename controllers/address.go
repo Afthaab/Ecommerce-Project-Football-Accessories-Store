@@ -21,7 +21,7 @@ func AddAddress(c *gin.Context) {
 			"Error": "Error in Binding the JSON",
 		})
 	}
-	addressdata.Userid = uint(id)
+	addressdata.Uid = uint(id)
 	DB := config.DBconnect()
 	result := DB.Create(&addressdata)
 	if result.Error != nil {

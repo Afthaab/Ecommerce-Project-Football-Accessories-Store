@@ -6,6 +6,5 @@ import (
 )
 
 func OpenRoutes(r *gin.Engine) {
-	r.POST("/viewallproducts", controllers.ViewProducts)
-	r.POST("/viewallproducts/contraints", controllers.ViewAllProductConstraints)
+	r.GET("/viewproducts", controllers.ViewProducts)
 }

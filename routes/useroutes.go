@@ -12,14 +12,22 @@ func Userroutes(r *gin.Engine) {
 		user.POST("/signup", controllers.Usersignup)
 		user.POST("/signup/otpvalidate", controllers.Otpvalidate)
 		user.POST("/signin", controllers.Usersignin)
+		user.POST("/forgetpassword", controllers.ForgetPassword)
+		user.POST("/forgetpassword/validateotp", controllers.ValidateOtp)
+		user.POST("/forgetpassword/changepassword", controllers.ChangePassword)
 		user.GET("/signout", middlewares.UserAuth, controllers.UserSignout)
 
-		//routes with middlewares
+		//profile page routes
 		user.GET("/profilepage", middlewares.UserAuth, controllers.GetUserProfile)
 		user.PUT("/profilepage/editprofile", middlewares.UserAuth, controllers.EditUserProfile)
+		user.PUT("/profilepage/editprofile/changepassword", middlewares.UserAuth, controllers.ChangePasswordInProfile)
 		user.POST("/profilepage/addaddress", middlewares.UserAuth, controllers.AddAddress)
 		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
 		user.PUT("/profilepage/editaddress", middlewares.UserAuth, controllers.EditAddress)
+
+		//adding product to the cart
+		user.POST("/addtocart", middlewares.UserAuth, controllers.AddToCart)
+		user.GET("/viewcart", middlewares.UserAuth, controllers.ViewCart)
 
 	}
 

@@ -113,7 +113,7 @@ func Usersignin(c *gin.Context) {
 	}
 	checkcredential := userdata.CheckPassword(signindata.Password)
 	if checkcredential != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		c.JSON(404, gin.H{"error": "invalid credentials"})
 		c.Abort()
 		return
 	}

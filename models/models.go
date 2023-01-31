@@ -4,7 +4,35 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
+
+type Address struct {
+	Addressid uint   `JSON:"addressid" gorm:"primarykey;unique"`
+	User      User   `gorm:"ForeignKey:uid"`
+	Uid       uint   `JSON:"uid"`
+	Name      string `JSON:"name" gorm:"not null"`
+	Phoneno   string `JSON:"phoneno" gorm:"not null"`
+	Houseno   string `JSON:"houseno" gorm:"not null"`
+	Area      string `JSON:"area" gorm:"not null"`
+	Landmark  string `JSON:"landmark" gorm:"not null"`
+	City      string `JSON:"city" gorm:"not null"`
+	Pincode   string `JSON:"pincode" gorm:"not null"`
+	District  string `JSON:"district" gorm:"not null"`
+	State     string `JSON:"state" gorm:"not null"`
+	Country   string `JSON:"country" gorm:"not null"`
+}
+
+type Cart struct {
+	gorm.Model
+	Product    Product `gorm:"ForeignKey:Pid"`
+	Pid        uint
+	Quantity   uint
+	Price      uint
+	Totalprice uint
+	User       User `gorm:"ForeignKey:Cartid"`
+	Cartid     uint
+}
 
 type User struct {
 	Userid      uint   `JSON:"userid" gorm:"unique;primaryKey"`
@@ -28,47 +56,41 @@ type Admin struct {
 	Phone     string `JSON:"phone"`
 	Password  string `JSON:"password"`
 }
-type Address struct {
-	Addressid uint   `JSON:"addressid" gorm:"primarykey;unique"`
-	Userid    uint   `JSON:"userid" gorm:"foreignKey:UserRefer"`
-	Name      string `JSON:"name" gorm:"not null"`
-	Phoneno   string `JSON:"phoneno" gorm:"not null"`
-	Houseno   string `JSON:"houseno" gorm:"not null"`
-	Area      string `JSON:"area" gorm:"not null"`
-	Landmark  string `JSON:"landmark" gorm:"not null"`
-	City      string `JSON:"city" gorm:"not null"`
-	Pincode   string `JSON:"pincode" gorm:"not null"`
-	District  string `JSON:"district" gorm:"not null"`
-	State     string `JSON:"state" gorm:"not null"`
-	Country   string `JSON:"country" gorm:"not null"`
+
+type Image struct {
+	ID      uint    `json:"id" gorm:"primaryKey"`
+	Product Product `gorm:"ForeignKey:Pid"`
+	Pid     uint    `json:"pid"`
+	Image   string  `JSON:"Image" gorm:"not null"`
 }
+
 type Product struct {
 	Productid   uint   `JSON:"productid" gorm:"primarykey;unique"`
 	Productname string `JSON:"productname" gorm:"not null"`
 	Description string `JSON:"description" gorm:"not null"`
 	Stock       uint   `JSON:"stock" gorm:"not null"`
 	Price       uint   `JSON:"price" gorm:"not null"`
+	Team        Team   `gorm:"ForeignKey:Teamid"`
 	Teamid      uint   `JSON:"teamid"`
+	Brand       Brand  `gorm:"ForeignKey:Brandid"`
 	Brandid     uint   `JSON:"brandid"`
+	Size        Size   `gorm:"ForeignKey:Sizeid"`
 	Sizeid      uint   `JSON:"sizeid"`
 }
 
 type Size struct {
-	Product  Product `gorm:"foreignkey:Sizeid"`
-	Sizeid   uint    `JSON:"sizeid" gorm:"primarykey"`
-	Sizetype string  `JSON:"sizetype" gorm:"not null"`
+	ID       uint   `json:"id" gorm:"primaryKey"  `
+	Sizetype string `JSON:"sizetype" gorm:"not null"`
 }
 
 type Brand struct {
-	Product   Product `gorm:"foreignkey:Brandid"`
-	Brandid   uint    `JSON:"brandid" gorm:"primarykey"`
-	Brandname string  `JSON:"brandname" gorm:"not null"`
+	ID        uint   `json:"id" gorm:"primaryKey"  `
+	Brandname string `JSON:"brandname" gorm:"not null"`
 }
 
 type Team struct {
-	Product  Product `gorm:"foreignkey:Teamid"`
-	Teamid   uint    `JSON:"teamid" gorm:"primarykey"`
-	Teamname string  `JSON:"teamname" gorm:"not null"`
+	ID       uint   `json:"id" gorm:"primaryKey"`
+	Teamname string `JSON:"teamname" gorm:"not null"`
 }
 
 func (user *User) HashPassword(password string) error {
@@ -79,6 +101,7 @@ func (user *User) HashPassword(password string) error {
 	user.Password = string(bytes)
 	return nil
 }
+
 func (user *User) CheckPassword(providedPassword string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(providedPassword))
 	if err != nil {

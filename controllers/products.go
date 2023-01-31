@@ -1,9 +1,14 @@
 package controllers
 
 import (
+	"path/filepath"
+
+	"strconv"
+
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func Addproducts(c *gin.Context) {
@@ -30,9 +35,44 @@ func Addproducts(c *gin.Context) {
 }
 
 func ViewProducts(c *gin.Context) {
-	var viewproducts []models.Product
+	type viewproducts struct {
+		Productname string
+		Description string
+		Stock       uint
+		Price       uint
+		Teamname    string
+		Sizetype    string
+		Brandname   string
+		Images      string
+	}
+	var datas []viewproducts
+	// var viewproducts models.Product
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT productname,description,stock,price,brands.brands,teams.teams,sizes.sizes FROM products INNER JOIN brands ON products.brandid=brands.brandid INNER JOIN teams ON products.teamid=teams.teamid INNER JOIN sizes ON products.sizeid=sizes.sizeid").Scan(&viewproducts)
+	result := DB.Raw("SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname, string_agg(images.image, ', ') as images FROM products RIGHT JOIN teams ON products.teamid=teams.id RIGHT JOIN sizes ON products.sizeid=sizes.id RIGHT JOIN brands ON products.brandid=brands.id RIGHT JOIN images on products.productid=images.pid GROUP BY products.productid, teams.teamname, sizes.sizetype, brands.brandname;").Scan(&datas)
+	if result.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"Products": datas,
+	})
+}
+func AddImages(c *gin.Context) {
+	imagepath, _ := c.FormFile("image")
+	extension := filepath.Ext(imagepath.Filename)
+	image := uuid.New().String() + extension
+	c.SaveUploadedFile(imagepath, "./public/images"+image)
+	pidconv := c.PostForm("pid")
+	pid, _ := strconv.Atoi(pidconv)
+
+	imagedata := models.Image{
+		Image: image,
+		Pid:   uint(pid),
+	}
+	DB := config.DBconnect()
+	result := DB.Create(&imagedata)
 	if result.Error != nil {
 		c.JSON(400, gin.H{
 			"Error": result.Error.Error(),
@@ -40,12 +80,7 @@ func ViewProducts(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Products": viewproducts,
+		"Message": "Image Added Successfully",
 	})
-}
 
-func ViewAllProductConstraints(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"Message": "View all products constraints page",
-	})
 }

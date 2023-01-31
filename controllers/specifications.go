@@ -174,7 +174,7 @@ func Editbrands(c *gin.Context) {
 		})
 		return
 	}
-	editbrands.Brandid = uint(id)
+	editbrands.ID = uint(id)
 	DB := config.DBconnect()
 	result := DB.Model(&editbrands).Updates(models.Brand{Brandname: editbrands.Brandname})
 	if result.Error != nil {
@@ -202,7 +202,7 @@ func Editsizes(c *gin.Context) {
 		})
 		return
 	}
-	editsizes.Sizeid = uint(id)
+	editsizes.ID = uint(id)
 	DB := config.DBconnect()
 	result := DB.Model(&editsizes).Updates(models.Size{Sizetype: editsizes.Sizetype})
 	if result.Error != nil {
@@ -230,7 +230,7 @@ func Editteams(c *gin.Context) {
 		})
 		return
 	}
-	editteams.Teamid = uint(id)
+	editteams.ID = uint(id)
 	DB := config.DBconnect()
 	result := DB.Model(&editteams).Updates(models.Team{Teamname: editteams.Teamname})
 	if result.Error != nil {
