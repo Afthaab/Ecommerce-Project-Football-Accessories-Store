@@ -25,11 +25,14 @@ func Userroutes(r *gin.Engine) {
 		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
 		user.PUT("/profilepage/editaddress", middlewares.UserAuth, controllers.EditAddress)
 
-		//adding product to the cart
+		//cart routes
 		user.POST("/addtocart", middlewares.UserAuth, controllers.AddToCart)
 		user.GET("/viewcart", middlewares.UserAuth, controllers.ViewCart)
 
+		//checkout routes
 		user.GET("/checkoutpage", middlewares.UserAuth, controllers.CheckOut)
+
+		user.POST("/payment/cashondelivery", middlewares.UserAuth, controllers.Payment)
 
 	}
 

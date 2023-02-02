@@ -9,19 +9,19 @@ import (
 func Adminroutes(r *gin.Engine) {
 	admin := r.Group("/admin")
 	{
-		//admin routes management
+		//admin routes
 		admin.POST("/signin", controllers.Adminsignin)
 		admin.GET("/signout", middlewares.AdminAuth, controllers.AdminSignout)
 		admin.GET("/adminpanel", middlewares.AdminAuth, controllers.Adminpanel)
 		admin.GET("/profilepage", middlewares.AdminAuth, controllers.AdminProfilepage)
 
-		//user management
+		//user management routes
 		admin.GET("/viewuser", middlewares.AdminAuth, controllers.Adminviewuser)
 		admin.GET("/searchuser", middlewares.AdminAuth, controllers.Adminsearchuser)
 		admin.PUT("/searchuser/blockuser", middlewares.AdminAuth, controllers.Adminblockuser)
 		admin.PUT("/searchuser/unblockuser", middlewares.AdminAuth, controllers.Adminunblockuser)
 
-		//specification management
+		//specification management routes
 		admin.POST("/addbrands", middlewares.AdminAuth, controllers.AddBrands)
 		admin.POST("/addsize", middlewares.AdminAuth, controllers.AddSize)
 		admin.POST("/addteams", middlewares.AdminAuth, controllers.AddTeams)
@@ -35,6 +35,8 @@ func Adminroutes(r *gin.Engine) {
 		//product management
 		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
 		admin.POST("/addimages", middlewares.AdminAuth, controllers.AddImages)
+
+		//payment routes
 
 	}
 }

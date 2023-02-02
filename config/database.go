@@ -25,6 +25,9 @@ func DBconnect() *gorm.DB {
 		&models.Product{},
 		&models.Image{},
 		&models.Cart{},
+		&models.Payment{},
+		&models.Orders{},
+		// &models.Orderditems{},
 	)
 	return DB
 }

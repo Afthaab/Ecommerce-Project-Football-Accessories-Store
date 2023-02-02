@@ -94,6 +94,39 @@ type Team struct {
 	Teamname string `JSON:"teamname" gorm:"not null"`
 }
 
+type Payment struct {
+	ID            uint   `json:"id" gorm:"primaryKey"`
+	Totalamount   uint   `JSON:"amount" gorm:"not null"`
+	Paymentmethod string `JSON:"paymentmethod" gorm:"not null"`
+	Paymentstatus bool   `JSON:"paymentstatus" gorm:"defualt:flase"`
+	User          User   `gorm:"ForeignKey:Uid"`
+	Uid           uint   `JSON:"uid" gorm:"not null"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+type Orders struct {
+	ID          uint    `json:"id" gorm:"primaryKey"`
+	User        User    `gorm:"ForeignKey:Uid"`
+	Uid         uint    `json:"uid"  gorm:"not null" `
+	Totalamount uint    `json:"totalamount"  gorm:"not null" `
+	Payment     Payment `gorm:"ForeignKey:pid"`
+	Pid         uint    `json:"pid"`
+	Orderstatus string  `json:"orderstatus"   `
+	Address     Address `gorm:"ForeignKey:Addid"`
+	Addid       uint    `json:"addid"  `
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// type Orderditems struct {
+// 	gorm.Model
+// 	Uid         uint `json:"uid"  gorm:"not null" `
+// 	Pid         uint `json:"pid" gorm:"not null" `
+// 	Orders      Orders `gorm:"ForeignKey:Orderid"`
+// 	Orderid     string `json:"orderid" gorm:"not null" `
+// 	Orderstatus string `json:"Orderstatus" gorm:"not null" `
+// }
+
 func (user *User) HashPassword(password string) error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
