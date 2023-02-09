@@ -16,8 +16,7 @@ func Adminroutes(r *gin.Engine) {
 		admin.GET("/profilepage", middlewares.AdminAuth, controllers.AdminProfilepage)
 
 		//user management routes
-		admin.GET("/viewuser", middlewares.AdminAuth, controllers.Adminviewuser)
-		admin.GET("/searchuser", middlewares.AdminAuth, controllers.Adminsearchuser)
+		admin.GET("/viewuser/searchuser", middlewares.AdminAuth, controllers.Adminviewuser)
 		admin.PUT("/searchuser/blockuser", middlewares.AdminAuth, controllers.Adminblockuser)
 		admin.PUT("/searchuser/unblockuser", middlewares.AdminAuth, controllers.Adminunblockuser)
 
@@ -36,7 +35,10 @@ func Adminroutes(r *gin.Engine) {
 		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
 		admin.POST("/addimages", middlewares.AdminAuth, controllers.AddImages)
 
-		//payment routes
+		//coupon routes
+		admin.POST("/addcoupon", middlewares.AdminAuth, controllers.AddCoupon)
+		admin.GET("/viewcoupon", middlewares.AdminAuth, controllers.ViewCoupons)
+		admin.PUT("/editcoupon", middlewares.AdminAuth, controllers.EditCoupon)
 
 	}
 }

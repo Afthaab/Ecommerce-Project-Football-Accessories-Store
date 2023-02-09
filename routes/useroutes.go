@@ -32,7 +32,19 @@ func Userroutes(r *gin.Engine) {
 		//checkout routes
 		user.GET("/checkoutpage", middlewares.UserAuth, controllers.CheckOut)
 
-		user.POST("/payment/cashondelivery", middlewares.UserAuth, controllers.Payment)
+		//coupon routes
+		user.POST("/coupon/redeem", middlewares.UserAuth, controllers.RedeemCoupon)
+
+		//payments route
+		user.POST("/payment/cod", middlewares.UserAuth, controllers.CashOnDevlivery)
+		user.GET("/payment/razorpay", middlewares.UserAuth, controllers.Razorpay)
+		user.GET("/payment/success", middlewares.UserAuth, controllers.RazorpaySuccess)
+		user.GET("/success", middlewares.UserAuth, controllers.Success)
+
+		//order management
+		user.POST("/order/placeorder", middlewares.UserAuth, controllers.PlaceOrder)
+		user.GET("/order/view/search", middlewares.UserAuth, controllers.ViewOrder)
+		user.PUT("/order/cancelorder", middlewares.UserAuth, controllers.CancelOrder)
 
 	}
 

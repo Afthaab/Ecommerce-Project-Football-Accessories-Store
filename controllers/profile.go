@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
@@ -70,12 +69,7 @@ func EditUserProfile(c *gin.Context) {
 }
 
 func ChangePasswordInProfile(c *gin.Context) {
-	id, err := strconv.Atoi(c.GetString("userid"))
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
-		})
-	}
+	id, _ := strconv.Atoi(c.GetString("userid"))
 	type passwordata struct {
 		Oldpassword string
 		Password1   string
@@ -89,28 +83,18 @@ func ChangePasswordInProfile(c *gin.Context) {
 		})
 		return
 	}
-	bytes, err := bcrypt.GenerateFromPassword([]byte(datas.Oldpassword), 14)
+	DB := config.DBconnect()
+	result := DB.Raw("SELECT * from users WHERE userid = ?", id).Scan(&userdata).Error
+	if result != nil {
+		c.JSON(400, gin.H{
+			"Error": "Bad Request",
+		})
+		return
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(userdata.Password), []byte(datas.Oldpassword))
 	if err != nil {
 		c.JSON(400, gin.H{
-			"Error": "Error in Hashing the password",
-		})
-		return
-	}
-	datas.Oldpassword = string(bytes)
-	fmt.Println(datas.Oldpassword)
-	DB := config.DBconnect()
-	result := DB.Raw("userid = ?", id)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": "Incorrect Old password",
-		})
-		return
-	}
-	fmt.Println(userdata.Password)
-	result1 := bcrypt.CompareHashAndPassword([]byte(userdata.Password), []byte(datas.Oldpassword))
-	if result1 != nil {
-		c.JSON(404, gin.H{
-			"Error": "there is the result",
+			"Error": err,
 		})
 		return
 	}
@@ -120,10 +104,18 @@ func ChangePasswordInProfile(c *gin.Context) {
 		})
 		return
 	}
-	result2 := DB.Model(&userdata).Updates(models.User{Password: datas.Password1})
-	if result2.Error != nil {
+	bytes, result1 := bcrypt.GenerateFromPassword([]byte(datas.Password1), 14)
+	if result1 != nil {
 		c.JSON(400, gin.H{
-			"Error": result.Error.Error(),
+			"Error": result1,
+		})
+		return
+	}
+	datas.Password1 = string(bytes)
+	result2 := DB.Model(&models.User{}).Where("userid = ?", id).Update("password", datas.Password1).Error
+	if result2 != nil {
+		c.JSON(404, gin.H{
+			"Error": result2,
 		})
 		return
 	}

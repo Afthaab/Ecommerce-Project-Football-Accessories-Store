@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -10,7 +11,7 @@ import (
 type Address struct {
 	Addressid  uint   `JSON:"addressid" gorm:"primarykey;unique"`
 	User       User   `gorm:"ForeignKey:uid"`
-	Uid        uint   `JSON:"uid"`
+	Uid        uint   `JSON:"uid, omitempty"`
 	Name       string `JSON:"name" gorm:"not null"`
 	Phoneno    string `JSON:"phoneno" gorm:"not null"`
 	Houseno    string `JSON:"houseno" gorm:"not null"`
@@ -77,6 +78,7 @@ type Product struct {
 	Brandid     uint   `JSON:"brandid"`
 	Size        Size   `gorm:"ForeignKey:Sizeid"`
 	Sizeid      uint   `JSON:"sizeid"`
+	Basemage    string `JSON:"baseimage"`
 }
 
 type Size struct {
@@ -95,37 +97,63 @@ type Team struct {
 }
 
 type Payment struct {
-	ID            uint   `json:"id" gorm:"primaryKey"`
-	Totalamount   uint   `JSON:"amount" gorm:"not null"`
-	Paymentmethod string `JSON:"paymentmethod" gorm:"not null"`
-	Paymentstatus bool   `JSON:"paymentstatus" gorm:"defualt:flase"`
-	User          User   `gorm:"ForeignKey:Uid"`
-	Uid           uint   `JSON:"uid" gorm:"not null"`
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	Totalamount   uint      `JSON:"amount" gorm:"not null"`
+	Paymentmethod string    `JSON:"paymentmethod" gorm:"not null"`
+	Paymentstatus string    `JSON:"paymentstatus"`
+	User          User      `gorm:"ForeignKey:Useridno"`
+	Useridno      uint      `JSON:"useridno" gorm:"not null"`
+	Coupon        Coupon    `gorm:"ForeignKey:Couponid"`
+	Couponid      uuid.UUID `JSON:"couponid" gorm:"default:null"`
+	RazorPay      RazorPay  `gorm:"ForeignKey:razorpayid"`
+	Razorpayid    string    `JSON:"razorpayid" gorm:"defualt:null"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
+type RazorPay struct {
+	UserID          uint   `JSON:"userid"`
+	RazorPaymentId  string `JSON:"razorpaymentid" gorm:"primaryKey"`
+	RazorPayOrderID string `JSON:"razorpayorderid"`
+	Signature       string `JSON:"signature"`
+	AmountPaid      string `JSON:"amountpaid"`
+}
 type Orders struct {
-	ID          uint    `json:"id" gorm:"primaryKey"`
-	User        User    `gorm:"ForeignKey:Uid"`
-	Uid         uint    `json:"uid"  gorm:"not null" `
-	Totalamount uint    `json:"totalamount"  gorm:"not null" `
-	Payment     Payment `gorm:"ForeignKey:pid"`
-	Pid         uint    `json:"pid"`
-	Orderstatus string  `json:"orderstatus"   `
-	Address     Address `gorm:"ForeignKey:Addid"`
-	Addid       uint    `json:"addid"  `
+	Orderid     uuid.UUID `json:"orderid" gorm:"type:uuid;default:gen_random_uuid();not null;primaryKey"`
+	User        User      `gorm:"ForeignKey:Useridno"`
+	Useridno    uint      `json:"useridno"  gorm:"not null" `
+	Totalamount uint      `json:"totalamount"  gorm:"not null" `
+	Payment     Payment   `gorm:"ForeignKey:Paymentid"`
+	Paymentid   uint      `json:"paymentid"`
+	Orderstatus string    `json:"orderstatus"   `
+	Address     Address   `gorm:"ForeignKey:Addid"`
+	Addid       uint      `json:"addid"  `
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
 
-// type Orderditems struct {
-// 	gorm.Model
-// 	Uid         uint `json:"uid"  gorm:"not null" `
-// 	Pid         uint `json:"pid" gorm:"not null" `
-// 	Orders      Orders `gorm:"ForeignKey:Orderid"`
-// 	Orderid     string `json:"orderid" gorm:"not null" `
-// 	Orderstatus string `json:"Orderstatus" gorm:"not null" `
-// }
+type Orderditems struct {
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	Product    Product   `gorm:"ForeignKey:Pid"`
+	Pid        uint      `json:"pid" gorm:"not null" `
+	User       User      `gorm:"ForeignKey:Uid"`
+	Uid        uint      `json:"uid"`
+	Orders     Orders    `gorm:"ForeignKey:Oid"`
+	Oid        uuid.UUID `json:"oid" gorm:"type:uuid;not null"`
+	Quantity   uint      `json:"quantity" gorm:"not null"`
+	Price      uint      `json:"price" gorm:"not null"`
+	Totalprice uint      `json:"totalprice" gorm:"not null"`
+}
+
+type Coupon struct {
+	ID             uuid.UUID `json:"id" gorm:"type:uuid;default:gen_random_uuid();not null;primaryKey"`
+	Couponame      string    `json:"couponame" gorm:"not null"`
+	Minamount      uint      `json:"minamount" gorm:"not null"`
+	Discount       int       `json:"discount" gorm:"not null"`
+	Expirationdate string    `json:"expirationdate" gorm:"not null"`
+	Isactive       bool      `json:"isactive" gorm:"not null;default:true"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
 
 func (user *User) HashPassword(password string) error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)

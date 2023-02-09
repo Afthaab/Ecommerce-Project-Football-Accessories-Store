@@ -7,4 +7,5 @@ import (
 
 func OpenRoutes(r *gin.Engine) {
 	r.GET("/viewproducts", controllers.ViewProducts)
+	
 }

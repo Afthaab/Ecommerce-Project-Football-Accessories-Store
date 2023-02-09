@@ -128,7 +128,7 @@ func Usersignin(c *gin.Context) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("UserAuth", token, 36000*24*30, "", "", false, true)
 	c.JSON(200, gin.H{
-		"Status":  "Signin Successful",
+		"User ID": userdata.Userid,
 		"Message": "Goto /home",
 	})
 

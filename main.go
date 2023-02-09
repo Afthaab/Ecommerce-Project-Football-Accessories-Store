@@ -9,12 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var R = gin.Default()
+
 func init() {
 	initializers.LoadEnv()
 	config.DBconnect()
+	R.LoadHTMLGlob("templates/*.html")
 }
-
-var R = gin.Default()
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
@@ -22,7 +23,5 @@ func main() {
 	routes.Userroutes(R)
 	routes.Adminroutes(R)
 	routes.OpenRoutes(R)
-
 	R.Run(os.Getenv("PORT"))
-
 }

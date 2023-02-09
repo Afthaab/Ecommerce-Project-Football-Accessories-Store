@@ -46,11 +46,11 @@ func ViewProducts(c *gin.Context) {
 		Teamname    string
 		Sizetype    string
 		Brandname   string
-		Images      string
+		Image       string
 	}
 	var datas []viewproducts
 	DB := config.DBconnect()
-	query := "SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname, string_agg(images.image, ', ') as images FROM products RIGHT JOIN teams ON products.teamid=teams.id RIGHT JOIN sizes ON products.sizeid=sizes.id RIGHT JOIN brands ON products.brandid=brands.id RIGHT JOIN images on products.productid=images.pid GROUP BY products.productid, teams.teamname, sizes.sizetype, brands.brandname"
+	query := "SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname FROM products INNER JOIN teams ON products.teamid=teams.id INNER JOIN sizes ON products.sizeid=sizes.id INNER JOIN brands ON products.brandid=brands.id"
 
 	if limit != 0 || offset != 0 {
 		if limit == 0 {

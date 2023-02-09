@@ -78,7 +78,7 @@ func ViewSearchBrands(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Find(&viewbrands)
 	if searchid != "" {
-		result1 := DB.First(&viewbrands, "brandid = ?", searchid)
+		result1 := DB.First(&viewbrands, "id = ?", searchid)
 		if result1.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result1.Error.Error(),
@@ -108,7 +108,7 @@ func ViewSearchsize(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Find(&viewsizes)
 	if searchid != "" {
-		result1 := DB.First(&viewsizes, "sizeid = ?", searchid)
+		result1 := DB.First(&viewsizes, "id = ?", searchid)
 		if result1.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result1.Error.Error(),
@@ -137,7 +137,7 @@ func ViewSearchteams(c *gin.Context) {
 	DB := config.DBconnect()
 	result := DB.Find(&viewteams)
 	if searchid != "" {
-		result1 := DB.First(&viewteams, "teamid = ?", searchid)
+		result1 := DB.First(&viewteams, "id = ?", searchid)
 		if result1.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result1.Error.Error(),
