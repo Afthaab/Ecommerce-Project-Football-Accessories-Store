@@ -13,13 +13,21 @@ import (
 )
 
 func CashOnDevlivery(c *gin.Context) {
-	amount, _ := strconv.Atoi(c.Query("amount"))
 	id, err := strconv.Atoi(c.GetString("userid"))
 	cid, _ := uuid.Parse(c.Query("couponid"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": "Error in string conversion",
 		})
+	}
+	var amount uint
+	DB := config.DBconnect()
+	result1 := DB.Raw("SELECT SUM(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount)
+	if result1.Error != nil {
+		c.JSON(400, gin.H{
+			"Error": result1.Error.Error(),
+		})
+		return
 	}
 	method := "Cash on Delivery"
 	status := "pending"
@@ -28,11 +36,12 @@ func CashOnDevlivery(c *gin.Context) {
 		Paymentmethod: method,
 		Useridno:      uint(id),
 		Paymentstatus: status,
+		Razorpayid:    "",
 	}
 	if cid != uuid.Nil {
 		paymentdata.Couponid = cid
 	}
-	DB := config.DBconnect()
+
 	result := DB.Create(&paymentdata).Error
 	if result != nil {
 		c.JSON(400, gin.H{
@@ -93,7 +102,6 @@ func Razorpay(c *gin.Context) {
 
 }
 func RazorpaySuccess(c *gin.Context) {
-	fmt.Println("razorpay fuckin success")
 	userid := c.Query("user_id")
 	userID, _ := strconv.Atoi(userid)
 	orderid := c.Query("order_id")

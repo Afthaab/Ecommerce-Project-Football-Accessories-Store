@@ -138,6 +138,7 @@ func ViewOrder(c *gin.Context) {
 	}
 
 }
+
 func CancelOrder(c *gin.Context) {
 	oid, _ := uuid.FromString(c.Query("orderid"))
 	uid, _ := strconv.Atoi(c.GetString("userid"))
@@ -149,13 +150,14 @@ func CancelOrder(c *gin.Context) {
 		})
 		return
 	}
-	result2 := DB.Exec("UPDATE payments SET paymentstatus = 'failed' WHERE id IN (SELECT paymentid FROM orders WHERE orderid = ? AND useridno = ?)", oid, uid)
-	if result2.RowsAffected == 0 {
-		c.JSON(400, gin.H{
-			"Error": "No rows affected",
-		})
-		return
-	}
+	
+	// result2 := DB.Exec("UPDATE payments SET paymentstatus = 'failed' WHERE id IN (SELECT paymentid FROM orders WHERE orderid = ? AND useridno = ?)", oid, uid)
+	// if result2.RowsAffected == 0 {
+	// 	c.JSON(400, gin.H{
+	// 		"Error": "No rows affected",
+	// 	})
+	// 	return
+	// }
 
 	c.JSON(200, gin.H{
 		"Message":  "Successfully Updated order and Payment ",

@@ -40,7 +40,7 @@ func CheckOut(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"Default Address": datas,
 	})
-	var totalPrice float64
+	var totalPrice uint
 	result1 := DB.Table("carts").Where("cartid = ?", id).Select("SUM(totalprice)").Scan(&totalPrice).Error
 	if result1 != nil {
 		c.JSON(400, gin.H{

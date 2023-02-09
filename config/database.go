@@ -30,6 +30,7 @@ func DBconnect() *gorm.DB {
 		&models.Orderditems{},
 		&models.Coupon{},
 		&models.RazorPay{},
+		&models.Wallet{},
 	)
 	return DB
 }

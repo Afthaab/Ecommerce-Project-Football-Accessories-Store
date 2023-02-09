@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
@@ -24,27 +25,38 @@ func AddToCart(c *gin.Context) {
 		})
 	}
 	DB := config.DBconnect()
-	DB.Raw("SELECT stock, price FROM products WHERE productid = ?", cartdata.Pid).Scan(&productdata)
-	if cartdata.Quantity >= productdata.Stock {
-		c.JSON(404, gin.H{
-			"Message": "Out of Stock",
-		})
-		return
-	}
-	totalprice := productdata.Price * cartdata.Quantity
-	cartitems := models.Cart{
-		Pid:        cartdata.Pid,
-		Quantity:   cartdata.Quantity,
-		Price:      productdata.Price,
-		Totalprice: totalprice,
-		Cartid:     uint(id),
-	}
-	result := DB.Create(&cartitems)
+	result := DB.First(&models.Cart{}, "pid = ?", cartdata.Pid)
+	DB.Raw("SELECT * FROM products WHERE productid = ?", cartdata.Pid).Scan(&productdata)
 	if result.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result.Error.Error(),
-		})
-		return
+		if cartdata.Quantity >= productdata.Stock {
+			c.JSON(404, gin.H{
+				"Message": "Out of Stock",
+			})
+			return
+		}
+		fmt.Println(productdata.Price)
+		fmt.Println(cartdata.Quantity)
+		totalprice := productdata.Price * cartdata.Quantity
+		cartitems := models.Cart{
+			Pid:        cartdata.Pid,
+			Quantity:   cartdata.Quantity,
+			Price:      productdata.Price,
+			Totalprice: totalprice,
+			Cartid:     uint(id),
+		}
+		result1 := DB.Create(&cartitems)
+		if result1.Error != nil {
+			c.JSON(400, gin.H{
+				"Error": result1.Error.Error(),
+			})
+			return
+		}
+	} else {
+		DB.Exec("UPDATE carts SET quantity = quantity + ? WHERE pid = ?", cartdata.Quantity, cartdata.Pid)
+		DB.Raw("SELECT * FROM carts WHERE pid = ?", cartdata.Pid).Scan(&cartdata)
+		totalprice := productdata.Price * cartdata.Quantity
+		DB.Exec("UPDATE carts SET totalprice = ? WHERE pid = ?", totalprice, cartdata.Pid)
+
 	}
 	c.JSON(200, gin.H{
 		"Message": "Added to the Cart Successfull",
@@ -80,4 +92,3 @@ func ViewCart(c *gin.Context) {
 	})
 
 }
-

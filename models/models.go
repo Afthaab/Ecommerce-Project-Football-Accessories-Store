@@ -105,8 +105,8 @@ type Payment struct {
 	Useridno      uint      `JSON:"useridno" gorm:"not null"`
 	Coupon        Coupon    `gorm:"ForeignKey:Couponid"`
 	Couponid      uuid.UUID `JSON:"couponid" gorm:"default:null"`
-	RazorPay      RazorPay  `gorm:"ForeignKey:razorpayid"`
-	Razorpayid    string    `JSON:"razorpayid" gorm:"defualt:null"`
+	RazorPay      RazorPay  `gorm:"ForeignKey:Razorpayid"`
+	Razorpayid    string    `JSON:"razorpayid" gorm:"default:null"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
@@ -153,6 +153,14 @@ type Coupon struct {
 	Isactive       bool      `json:"isactive" gorm:"not null;default:true"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+type Wallet struct {
+	ID        uint `json:"id" gorm:"primaryKey"`
+	Balance   uint `json:"balance" gorm:"not null"`
+	User      User `gorm:"ForeignKey:walletid"`
+	Walletid  uint `json:"walletid" gorm:"not null"`
+	CreatedAt time.Time
 }
 
 func (user *User) HashPassword(password string) error {
