@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type Address struct {
@@ -26,7 +25,7 @@ type Address struct {
 }
 
 type Cart struct {
-	gorm.Model
+	ID         uint    `json:"id" gorm:"primaryKey"`
 	Product    Product `gorm:"ForeignKey:Pid"`
 	Pid        uint
 	Quantity   uint
@@ -34,6 +33,8 @@ type Cart struct {
 	Totalprice uint
 	User       User `gorm:"ForeignKey:Cartid"`
 	Cartid     uint
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type User struct {
@@ -78,7 +79,7 @@ type Product struct {
 	Brandid     uint   `JSON:"brandid"`
 	Size        Size   `gorm:"ForeignKey:Sizeid"`
 	Sizeid      uint   `JSON:"sizeid"`
-	Basemage    string `JSON:"baseimage"`
+	Baseimage   string `JSON:"baseimage"`
 }
 
 type Size struct {
@@ -124,9 +125,9 @@ type Orders struct {
 	Totalamount uint      `json:"totalamount"  gorm:"not null" `
 	Payment     Payment   `gorm:"ForeignKey:Paymentid"`
 	Paymentid   uint      `json:"paymentid"`
-	Orderstatus string    `json:"orderstatus"   `
 	Address     Address   `gorm:"ForeignKey:Addid"`
 	Addid       uint      `json:"addid"  `
+	Orderstatus string    `json:"orderstatus" grom:"not null"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -148,19 +149,30 @@ type Coupon struct {
 	ID             uuid.UUID `json:"id" gorm:"type:uuid;default:gen_random_uuid();not null;primaryKey"`
 	Couponame      string    `json:"couponame" gorm:"not null"`
 	Minamount      uint      `json:"minamount" gorm:"not null"`
-	Discount       int       `json:"discount" gorm:"not null"`
-	Expirationdate string    `json:"expirationdate" gorm:"not null"`
+	Discount       uint      `json:"discount" gorm:"not null"`
+	Expirationdate time.Time `json:"expirationdate" gorm:"not null"`
 	Isactive       bool      `json:"isactive" gorm:"not null;default:true"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
 
 type Wallet struct {
-	ID        uint `json:"id" gorm:"primaryKey"`
-	Balance   uint `json:"balance" gorm:"not null"`
-	User      User `gorm:"ForeignKey:walletid"`
-	Walletid  uint `json:"walletid" gorm:"not null"`
-	CreatedAt time.Time
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Balance   uint      `json:"balance" gorm:"not null"`
+	User      User      `gorm:"ForeignKey:walletid"`
+	Walletid  uint      `json:"walletid" gorm:"not null"`
+	Orders    Orders    `gorm:"ForeignKey:Oid"`
+	Oid       uuid.UUID `json:"oid" gorm:"not null"`
+	CreatedAt time.Time `gorm:"default:NOW()"`
+}
+
+type Wishlist struct {
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	Product    Product   `gorm:"ForeignKey:Pid"`
+	Pid        uint      `json:"pid" gorm:"not null" `
+	User       User      `gorm:"ForeignKey:wishlistid"`
+	Wishlistid uint      `json:"wishlistid" gorm:"not null"`
+	CreatedAt  time.Time `gorm:"default:NOW()"`
 }
 
 func (user *User) HashPassword(password string) error {

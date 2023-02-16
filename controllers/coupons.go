@@ -19,7 +19,16 @@ func AddCoupon(c *gin.Context) {
 		})
 		return
 	}
+	//checking if the entered date is valid or not
+	now := time.Now()
+	if coupondata.Expirationdate.Before(now) {
+		c.JSON(400, gin.H{
+			"Error": "Please enter a valid date",
+		})
+		return
+	}
 	DB := config.DBconnect()
+	//creating the new coupon
 	result := DB.Create(&coupondata).Error
 	if result != nil {
 		c.JSON(400, gin.H{
@@ -38,20 +47,29 @@ func ViewCoupons(c *gin.Context) {
 	cid, _ := uuid.FromString(c.Query("couponid"))
 	var coupondata []models.Coupon
 	DB := config.DBconnect()
+	//checking and updating the expired coupon status to false
+	result := DB.Exec("UPDATE coupons SET isactive = false WHERE expirationdate < NOW()")
+	if err := result.Error; err != nil {
+		c.JSON(400, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	//searching  a partiuclar coupon through id from the query params
 	if cid != uuid.Nil {
-		result := DB.Raw("SELECT * FROM coupons WHERE id = ?", cid).Scan(&coupondata).Error
-		if result != nil {
+		result1 := DB.Raw("SELECT * FROM coupons WHERE id = ?", cid).Scan(&coupondata).Error
+		if result1 != nil {
 			c.JSON(404, gin.H{
-				"Error": result.Error(),
+				"Error": result1.Error(),
 			})
 			return
 		}
 
-	} else {
-		result := DB.Raw("SELECT * FROM coupons").Scan(&coupondata).Error
-		if result != nil {
+	} else { //showing all coupons
+		result1 := DB.Raw("SELECT * FROM coupons").Scan(&coupondata).Error
+		if result1 != nil {
 			c.JSON(404, gin.H{
-				"Error": result.Error(),
+				"Error": result1.Error(),
 			})
 			return
 		}
@@ -63,8 +81,9 @@ func ViewCoupons(c *gin.Context) {
 
 }
 func RedeemCoupon(c *gin.Context) {
-	amount, _ := strconv.Atoi(c.Query("totalamount"))
+	id, _ := strconv.Atoi(c.GetString("userid"))
 	var coupondata models.Coupon
+	var paymentdata models.Payment
 	err := c.Bind(&coupondata)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -73,41 +92,58 @@ func RedeemCoupon(c *gin.Context) {
 		return
 	}
 	DB := config.DBconnect()
-	result := DB.First(&models.Payment{}, " couponid = ?", coupondata.ID)
+	//checking the coupon is used or not
+	result := DB.First(&paymentdata, " couponid = ?", coupondata.ID)
 	if result.Error != nil {
-		result1 := DB.Raw("SELECT * from coupons WHERE id = ?", coupondata.ID).Scan(&coupondata).Error
-		if result1 != nil {
+		//getting the coupon data
+		result1 := DB.Raw("SELECT * from coupons WHERE id = ?", coupondata.ID).Scan(&coupondata)
+		if result1.Error != nil {
 			c.JSON(404, gin.H{
-				"Error": result1.Error(),
+				"Error": result1.Error,
 			})
 			return
 		}
-		exp, _ := time.Parse("2006-01-02", coupondata.Expirationdate)
-		currentime := time.Now().UTC()
-		if currentime.After(exp) {
-			DB.Exec("UPDATE coupons SET isactive = false WHERE id = ?", coupondata.ID)
+		var amount uint
+		//getting the totalprice from the cart
+		result := DB.Raw("SELECT sum(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount)
+		if result.Error != nil {
+			c.JSON(404, gin.H{
+				"Error": result.Error.Error(),
+			})
+			return
+		}
+		//checking the minimum amount to apply the coupon
+		if amount < coupondata.Minamount {
+			c.JSON(404, gin.H{
+				"Minimun amount to redeem a coupon is ": coupondata.Minamount,
+			})
+			return
+		}
+		//checking the expiration of the coupon
+		now := time.Now()
+		if coupondata.Expirationdate.Before(now) {
 			c.JSON(400, gin.H{
-				"Error": "The Coupon has expired",
+				"Error": "Coupon has Expired",
 			})
 			return
 		}
+		//applying the discount
 		final := amount - ((amount * coupondata.Discount) / 100)
 		c.JSON(200, gin.H{
-
-			"discount Amount": final,
-			"Coupon ID":       coupondata.ID,
-			"exp":             exp,
+			"Message":           "Success",
+			"discounted Amount": final,
+			"Coupon ID":         coupondata.ID,
 		})
 
 	} else {
 		c.JSON(400, gin.H{
-			"Message": "Coupon alredy used",
+			"Message": "Coupon alredy used by the user",
 		})
 	}
 
 }
 func EditCoupon(c *gin.Context) {
-	c.Query("couponid")
+	cid, _ := uuid.FromString(c.Query("couponid"))
 	var coupondata models.Coupon
 	err := c.Bind(&coupondata)
 	if err != nil {
@@ -116,8 +152,17 @@ func EditCoupon(c *gin.Context) {
 		})
 		return
 	}
+	//checking if the entered date is valid or not
+	now := time.Now()
+	if coupondata.Expirationdate.Before(now) {
+		c.JSON(400, gin.H{
+			"Error": "Please enter a valid date",
+		})
+		return
+	}
+	//updating the coupon
 	DB := config.DBconnect()
-	result := DB.Model(&coupondata).Updates(models.Coupon{ID: coupondata.ID, Couponame: coupondata.Couponame, Minamount: coupondata.Minamount, Discount: coupondata.Discount, Expirationdate: coupondata.Expirationdate, Isactive: coupondata.Isactive})
+	result := DB.Model(&coupondata).Where("id = ?", cid).Updates(models.Coupon{Couponame: coupondata.Couponame, Minamount: coupondata.Minamount, Discount: coupondata.Discount, Expirationdate: coupondata.Expirationdate, Isactive: coupondata.Isactive})
 	if result.Error != nil {
 		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
@@ -125,6 +170,28 @@ func EditCoupon(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "Coupon Updated Successfully",
+		"Message":          "Coupon Updated Successfully",
+		"Id":               cid,
+		"Coupon Name":      coupondata.Couponame,
+		"Minimun Amount":   coupondata.Minamount,
+		"Discounted Price": coupondata.Discount,
+		"Expiration Date":  coupondata.Expirationdate,
+		"Active Status":    coupondata.Isactive,
 	})
+}
+func DeleteCoupon(c *gin.Context) {
+	cid, _ := uuid.FromString(c.Query("couponid"))
+	DB := config.DBconnect()
+	//deleting the coupon
+	result := DB.Delete(&models.Coupon{}, " id = ?", cid)
+	if result.Error != nil {
+		c.JSON(400, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"Message": "Successfully Deleted",
+	})
+
 }

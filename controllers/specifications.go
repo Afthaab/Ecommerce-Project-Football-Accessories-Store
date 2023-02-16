@@ -25,7 +25,9 @@ func AddBrands(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "New Brand added Successfully",
+		"Message":    "New Brand added Successfully",
+		"Brand ID":   addbrand.ID,
+		"Brand Name": addbrand.Brandname,
 	})
 }
 
@@ -46,7 +48,9 @@ func AddSize(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "New Size added Successfully",
+		"Message":   "New Size added Successfully",
+		"Size ID":   addsize.ID,
+		"Size Type": addsize.Sizetype,
 	})
 
 }
@@ -68,7 +72,9 @@ func AddTeams(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "New Team added Successfully",
+		"Message":   "New Team added Successfully",
+		"Team ID":   addteam.ID,
+		"Team Name": addteam.Teamname,
 	})
 }
 

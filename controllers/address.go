@@ -22,7 +22,7 @@ func AddAddress(c *gin.Context) {
 		})
 	}
 	DB := config.DBconnect()
-	DB.Model(&models.Address{}).Where("uid = ?", id).Update("defaultadd", false)
+	DB.Model(&addressdata).Where("uid = ?", id).Update("defaultadd", false)
 	addressdata.Uid = uint(id)
 	result := DB.Create(&addressdata)
 	if result.Error != nil {
@@ -31,9 +31,11 @@ func AddAddress(c *gin.Context) {
 		})
 		return
 	}
-	DB.Model(&models.Address{}).Where("addressid = ?", addressdata.Addressid).Update("defaultadd", true)
+	DB.Model(&addressdata).Where("addressid = ?", addressdata.Addressid).Update("defaultadd", true)
 	c.JSON(200, gin.H{
-		"Message": "Address added succesfully",
+		"Message":         "Address added succesfully",
+		"Address ID":      addressdata.Addressid,
+		"Default Address": addressdata.Defaultadd,
 	})
 
 }
@@ -47,21 +49,23 @@ func ShowAddress(c *gin.Context) {
 	}
 
 	type addressdata struct {
-		Name     string
-		Phoneno  string
-		Houseno  string
-		Area     string
-		Landmark string
-		City     string
-		Pincode  string
-		District string
-		State    string
-		Country  string
+		Addressid  uint
+		Name       string
+		Phoneno    string
+		Houseno    string
+		Area       string
+		Landmark   string
+		City       string
+		Pincode    string
+		District   string
+		State      string
+		Country    string
+		Defaultadd bool
 	}
 	var datas []addressdata
 	DB := config.DBconnect()
 	if searchid != 0 {
-		result1 := DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE uid = ? AND addressid = ?", id, searchid).Scan(&datas)
+		result1 := DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ? AND addressid = ?", id, searchid).Scan(&datas)
 		if result1.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result1.Error.Error(),
@@ -69,7 +73,7 @@ func ShowAddress(c *gin.Context) {
 			return
 		}
 	} else {
-		result := DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE uid = ?", id).Scan(&datas)
+		result := DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ?", id).Scan(&datas)
 		if result.Error != nil {
 			c.JSON(404, gin.H{
 				"Error": result.Error.Error(),
@@ -109,7 +113,9 @@ func EditAddress(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "Successfully Updated the Address",
+		"Message":         "Successfully Updated the Address",
+		"Address ID":      addressdata.Addressid,
+		"Default Address": addressdata.Defaultadd,
 	})
 
 }

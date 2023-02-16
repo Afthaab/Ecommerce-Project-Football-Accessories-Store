@@ -60,7 +60,7 @@ func AdminAuth(c *gin.Context) {
 	if err != nil {
 		// c.AbortWithStatus(http.StatusUnauthorized)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid Access",
+			"errorr": err,
 		})
 		return
 	}

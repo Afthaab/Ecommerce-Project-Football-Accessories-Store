@@ -10,23 +10,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Profiledata struct {
-	Firstname string
-	Lastname  string
-	Email     string
-	Phone     string
-}
-
 func GetUserProfile(c *gin.Context) {
 	id, err := strconv.Atoi(c.GetString("userid"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": "Error in string conversion",
 		})
+		return
 	}
-	var userdata Profiledata
+	var userdata models.User
 	DB := config.DBconnect()
-	result := DB.Raw("SELECT firstname,lastname,email,phone FROM users WHERE userid =?", id).Scan(&userdata)
+	result := DB.Raw("SELECT firstname,lastname,email,phone,userid,created_at FROM users WHERE userid =?", id).Scan(&userdata)
 	if result.Error != nil {
 		c.JSON(404, gin.H{
 			"Error": result.Error.Error(),
@@ -34,7 +28,12 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Profile Details": userdata,
+		"User ID":     userdata.Userid,
+		"First Name":  userdata.Firstname,
+		"Last Name":   userdata.Lastname,
+		"Email":       userdata.Email,
+		"Phone":       userdata.Phone,
+		"Date Joined": userdata.CreatedAt,
 	})
 
 }
@@ -64,6 +63,7 @@ func EditUserProfile(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{
 		"Message": "Profile Updated Successfully",
+		"User ID": userdata.Userid,
 	})
 
 }

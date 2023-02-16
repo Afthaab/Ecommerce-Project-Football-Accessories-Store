@@ -43,35 +43,34 @@ func Adminviewuser(c *gin.Context) {
 
 }
 
-func Adminblockuser(c *gin.Context) {
-	var userdata Viewdata
+func UserManagement(c *gin.Context) {
 	searchid := c.Query("userid")
-	DB := config.DBconnect()
-	result := DB.Raw("UPDATE users SET isblocked = true WHERE userid = ?", searchid).Scan(&userdata)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
-		})
-		return
-	}
-	c.JSON(200, gin.H{
-		"Message": "Successfully blocked the User",
-	})
-
-}
-func Adminunblockuser(c *gin.Context) {
+	status := c.Query("status")
 	var userdata Viewdata
-	searchid := c.Query("userid")
 	DB := config.DBconnect()
-	result := DB.Raw("UPDATE users SET isblocked = false WHERE userid = ?", searchid).Scan(&userdata)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	if status == "block" {
+		result := DB.Raw("UPDATE users SET isblocked = true WHERE userid = ?", searchid).Scan(&userdata)
+		if result.Error != nil {
+			c.JSON(404, gin.H{
+				"Error": result.Error.Error(),
+			})
+			return
+		}
+		c.JSON(200, gin.H{
+			"Message": "Successfully blocked the User",
 		})
-		return
-	}
-	c.JSON(200, gin.H{
-		"Message": "Successfully unblocked the User",
-	})
 
+	}
+	if status == "unblock" {
+		result := DB.Raw("UPDATE users SET isblocked = false WHERE userid = ?", searchid).Scan(&userdata)
+		if result.Error != nil {
+			c.JSON(404, gin.H{
+				"Error": result.Error.Error(),
+			})
+			return
+		}
+		c.JSON(200, gin.H{
+			"Message": "Successfully Unblocked the User",
+		})
+	}
 }

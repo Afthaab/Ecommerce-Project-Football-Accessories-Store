@@ -14,21 +14,14 @@ import (
 
 func CashOnDevlivery(c *gin.Context) {
 	id, err := strconv.Atoi(c.GetString("userid"))
+	amount, _ := strconv.Atoi(c.Query("amount"))
 	cid, _ := uuid.Parse(c.Query("couponid"))
 	if err != nil {
 		c.JSON(400, gin.H{
 			"Error": "Error in string conversion",
 		})
 	}
-	var amount uint
 	DB := config.DBconnect()
-	result1 := DB.Raw("SELECT SUM(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount)
-	if result1.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result1.Error.Error(),
-		})
-		return
-	}
 	method := "Cash on Delivery"
 	status := "pending"
 	paymentdata := models.Payment{
@@ -58,6 +51,7 @@ func CashOnDevlivery(c *gin.Context) {
 func Razorpay(c *gin.Context) {
 	id, err := strconv.Atoi(c.GetString("userid"))
 	cid, _ := uuid.Parse(c.Query("couponid"))
+	amount, _ := strconv.Atoi(c.Query("amount"))
 	DB := config.DBconnect()
 	var userdata models.User
 	result := DB.Raw("SELECT * FROM users WHERE userid = ?", id).Scan(&userdata)
@@ -67,14 +61,7 @@ func Razorpay(c *gin.Context) {
 		})
 		return
 	}
-	var amount uint
-	result1 := DB.Raw("SELECT SUM(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount)
-	if result1.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result1.Error.Error(),
-		})
-		return
-	}
+
 	client := razorpay.NewClient(os.Getenv("RAZORPAY_KEY_ID"), os.Getenv("RAZORPAY_SECRET"))
 	razpayvalue := amount * 100
 	data := map[string]interface{}{
@@ -124,15 +111,13 @@ func RazorpaySuccess(c *gin.Context) {
 		})
 		return
 	}
-	method := "Razor Pay"
-	status := "pending"
 	totalprice, _ := strconv.Atoi(totalamount)
 	id, _ := strconv.Atoi(userid)
 	paymentdata := models.Payment{
 		Totalamount:   uint(totalprice),
-		Paymentmethod: method,
+		Paymentmethod: "Razor Pay",
 		Useridno:      uint(id),
-		Paymentstatus: status,
+		Paymentstatus: "successfull",
 		Razorpayid:    paymentid,
 		Couponid:      cid,
 	}
@@ -154,11 +139,8 @@ func RazorpaySuccess(c *gin.Context) {
 }
 func Success(c *gin.Context) {
 	pid, _ := strconv.Atoi(c.Query("id"))
-	cid := c.Query("cid")
-	fmt.Printf("Fully success assholes")
 	c.HTML(200, "success.html", gin.H{
 		"paymentid": pid,
-		"couponid":  cid,
 	})
 
 }

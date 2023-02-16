@@ -30,28 +30,25 @@ func Addproducts(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"Message": "Successfully Added the Product",
+		"Message":     "Successfully Added the Product",
+		"Prodcuts ID": addproduct.Productid,
 	})
 
+}
+
+type productdata struct {
+	Productid   string
+	Productname string
+	Price       uint
+	Baseimage   string
 }
 
 func ViewProducts(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	offset, _ := strconv.Atoi(c.Query("offset"))
-	type viewproducts struct {
-		Productname string
-		Description string
-		Stock       uint
-		Price       uint
-		Teamname    string
-		Sizetype    string
-		Brandname   string
-		Image       string
-	}
-	var datas []viewproducts
+	var datas []productdata
 	DB := config.DBconnect()
-	query := "SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname FROM products INNER JOIN teams ON products.teamid=teams.id INNER JOIN sizes ON products.sizeid=sizes.id INNER JOIN brands ON products.brandid=brands.id"
-
+	query := "SELECT * FROM products"
 	if limit != 0 || offset != 0 {
 		if limit == 0 {
 			query = fmt.Sprintf("%s OFFSET %d", query, offset)
@@ -99,3 +96,5 @@ func AddImages(c *gin.Context) {
 	})
 
 }
+
+// "SELECT productname, description, stock, price, teams.teamname, sizes.sizetype, brands.brandname FROM products INNER JOIN teams ON products.teamid=teams.id INNER JOIN sizes ON products.sizeid=sizes.id INNER JOIN brands ON products.brandid=brands.id"

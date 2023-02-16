@@ -21,13 +21,17 @@ func Userroutes(r *gin.Engine) {
 		user.GET("/profilepage", middlewares.UserAuth, controllers.GetUserProfile)
 		user.PUT("/profilepage/editprofile", middlewares.UserAuth, controllers.EditUserProfile)
 		user.PUT("/profilepage/editprofile/changepassword", middlewares.UserAuth, controllers.ChangePasswordInProfile)
-		user.POST("/profilepage/addaddress", middlewares.UserAuth, controllers.AddAddress)
-		user.GET("/profilepage/showaddress", middlewares.UserAuth, controllers.ShowAddress)
-		user.PUT("/profilepage/editaddress", middlewares.UserAuth, controllers.EditAddress)
+
+		//address routes
+		user.POST("/address/add", middlewares.UserAuth, controllers.AddAddress)
+		user.GET("/address/view", middlewares.UserAuth, controllers.ShowAddress)
+		user.PUT("/address/edit", middlewares.UserAuth, controllers.EditAddress)
 
 		//cart routes
-		user.POST("/addtocart", middlewares.UserAuth, controllers.AddToCart)
-		user.GET("/viewcart", middlewares.UserAuth, controllers.ViewCart)
+		user.POST("/cart/add", middlewares.UserAuth, controllers.AddToCart)
+		user.GET("/cart/view", middlewares.UserAuth, controllers.ViewCart)
+		user.PUT("/cart/view/edit", middlewares.UserAuth, controllers.EditCart)
+		user.DELETE("/cart/view/delete", middlewares.UserAuth, controllers.DeleteCartItem)
 
 		//checkout routes
 		user.GET("/checkoutpage", middlewares.UserAuth, controllers.CheckOut)
@@ -41,11 +45,21 @@ func Userroutes(r *gin.Engine) {
 		user.GET("/payment/success", middlewares.UserAuth, controllers.RazorpaySuccess)
 		user.GET("/success", middlewares.UserAuth, controllers.Success)
 
-		//order management
+		//order routes
 		user.POST("/order/placeorder", middlewares.UserAuth, controllers.PlaceOrder)
 		user.GET("/order/view/search", middlewares.UserAuth, controllers.ViewOrder)
-		user.PUT("/order/cancelorder", middlewares.UserAuth, controllers.CancelOrder)
+		user.PUT("/order/cancel", middlewares.UserAuth, controllers.CancelOrder)
+		user.PUT("/order/return", middlewares.UserAuth, controllers.ReturnOrder)
+		user.GET("/order/view/invoice", middlewares.UserAuth, controllers.GenerateInvoice)
+		user.GET("/order/view/invoice/download", middlewares.UserAuth, controllers.InvoiceDownload)
 
+		//Wishlist routes
+		user.POST("/product/view/wishlist/add", middlewares.UserAuth, controllers.AddToWishlist)
+		user.GET("/product/view/wishlist/view", middlewares.UserAuth, controllers.ViewWishlist)
+		user.DELETE("/product/view/wishlist/delete", middlewares.UserAuth, controllers.RemoveWishlist)
+
+		//wallet
+		user.GET("/wallet/view", middlewares.UserAuth, controllers.ShowWallet)
 	}
 
 }

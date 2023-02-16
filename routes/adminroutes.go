@@ -16,29 +16,37 @@ func Adminroutes(r *gin.Engine) {
 		admin.GET("/profilepage", middlewares.AdminAuth, controllers.AdminProfilepage)
 
 		//user management routes
-		admin.GET("/viewuser/searchuser", middlewares.AdminAuth, controllers.Adminviewuser)
-		admin.PUT("/searchuser/blockuser", middlewares.AdminAuth, controllers.Adminblockuser)
-		admin.PUT("/searchuser/unblockuser", middlewares.AdminAuth, controllers.Adminunblockuser)
+		admin.GET("/user/view", middlewares.AdminAuth, controllers.Adminviewuser)
+		admin.PUT("/user/block/unblock", middlewares.AdminAuth, controllers.UserManagement)
 
 		//specification management routes
-		admin.POST("/addbrands", middlewares.AdminAuth, controllers.AddBrands)
-		admin.POST("/addsize", middlewares.AdminAuth, controllers.AddSize)
-		admin.POST("/addteams", middlewares.AdminAuth, controllers.AddTeams)
-		admin.GET("/view/searchbrands", middlewares.AdminAuth, controllers.ViewSearchBrands)
-		admin.GET("/view/searchsizes", middlewares.AdminAuth, controllers.ViewSearchsize)
-		admin.GET("/view/searchteams", middlewares.AdminAuth, controllers.ViewSearchteams)
-		admin.PUT("/editbrands", middlewares.AdminAuth, controllers.Editbrands)
-		admin.PUT("/editsizes", middlewares.AdminAuth, controllers.Editsizes)
-		admin.PUT("/editteams", middlewares.AdminAuth, controllers.Editteams)
+		admin.POST("/brands/add", middlewares.AdminAuth, controllers.AddBrands)
+		admin.GET("/brands/view", middlewares.AdminAuth, controllers.ViewSearchBrands)
+		admin.PUT("/brands/view/edit", middlewares.AdminAuth, controllers.Editbrands)
+
+		admin.POST("/sizes/add", middlewares.AdminAuth, controllers.AddSize)
+		admin.GET("/sizes/view", middlewares.AdminAuth, controllers.ViewSearchsize)
+		admin.PUT("/sizes/view/edit", middlewares.AdminAuth, controllers.Editsizes)
+
+		admin.POST("/teams/add", middlewares.AdminAuth, controllers.AddTeams)
+		admin.GET("/teams/view", middlewares.AdminAuth, controllers.ViewSearchteams)
+		admin.PUT("/teams/view/edit", middlewares.AdminAuth, controllers.Editteams)
 
 		//product management
-		admin.POST("/addproducts", middlewares.AdminAuth, controllers.Addproducts)
-		admin.POST("/addimages", middlewares.AdminAuth, controllers.AddImages)
+		admin.POST("/products/add", middlewares.AdminAuth, controllers.Addproducts)
+		admin.POST("/products/add/images", middlewares.AdminAuth, controllers.AddImages)
 
 		//coupon routes
-		admin.POST("/addcoupon", middlewares.AdminAuth, controllers.AddCoupon)
-		admin.GET("/viewcoupon", middlewares.AdminAuth, controllers.ViewCoupons)
-		admin.PUT("/editcoupon", middlewares.AdminAuth, controllers.EditCoupon)
+		admin.POST("/coupon/add", middlewares.AdminAuth, controllers.AddCoupon)
+		admin.GET("/coupon/view", middlewares.AdminAuth, controllers.ViewCoupons)
+		admin.PUT("/coupon/view/edit", middlewares.AdminAuth, controllers.EditCoupon)
+		admin.DELETE("/coupon/view/delete", middlewares.AdminAuth, controllers.DeleteCoupon)
+
+		//order Management
+		admin.GET("/order/view/search", middlewares.AdminAuth, controllers.AdminOrderView)
+		admin.PUT("/order/cancel", middlewares.AdminAuth, controllers.CancelOrder)
+		admin.PUT("/order/statusupdate", middlewares.AdminAuth, controllers.StatusUpdate)
+		admin.PUT("/order/return", middlewares.AdminAuth, controllers.ReturnAccepted)
 
 	}
 }
