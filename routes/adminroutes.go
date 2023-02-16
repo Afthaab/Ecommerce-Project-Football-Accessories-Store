@@ -48,5 +48,8 @@ func Adminroutes(r *gin.Engine) {
 		admin.PUT("/order/statusupdate", middlewares.AdminAuth, controllers.StatusUpdate)
 		admin.PUT("/order/return", middlewares.AdminAuth, controllers.ReturnAccepted)
 
+		//excel
+		admin.GET("/order/salesreport/download/excel", controllers.DownloadExcel)
+		admin.GET("/order/salesreport/download/pdf", controllers.DownloadPdf)
 	}
 }

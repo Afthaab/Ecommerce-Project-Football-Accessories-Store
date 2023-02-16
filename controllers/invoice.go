@@ -2,15 +2,21 @@ package controllers
 
 import (
 	"bytes"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"strconv"
 
 	"text/template"
 
+	"fmt"
 	"os/exec"
+
+	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/gin-gonic/gin"
 
 	"github.com/afthab/e_commerce/config"
 	"github.com/afthab/e_commerce/models"
-	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -209,4 +215,161 @@ func InvoiceDownload(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename=invoice.pdf")
 	c.Header("Content-Type", "application/pdf")
 	c.File("invoice.pdf")
+}
+
+type Orderdata struct {
+	Userid        uint
+	Firstname     string
+	Lastname      string
+	Email         string
+	Phone         string
+	Productid     string
+	Productname   string
+	Quantity      uint
+	Price         uint
+	Totalprice    uint
+	Oid           uuid.UUID
+	Id            uint
+	Paymentmethod string
+	Paymentstatus string
+}
+
+func DownloadExcel(c *gin.Context) {
+	var data []Orderdata
+	DB := config.DBconnect()
+	result1 := DB.Raw("select users.userid, users.firstname, users.lastname, users.email, users.phone, products.productid, products.productname, orderditems.quantity, orderditems.price, orderditems.totalprice, orderditems.oid, payments.id, payments.paymentmethod, payments.paymentstatus from orderditems inner join users on orderditems.uid=users.userid inner join products on products.productid=orderditems.pid inner join orders on orders.orderid=orderditems.oid inner join payments on orders.paymentid=payments.id where payments.paymentstatus = 'successfull'").Scan(&data)
+	if result1.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": result1.Error.Error(),
+		})
+		return
+	}
+	file := excelize.NewFile()
+	sheetName := "Sales Report"
+	index := file.NewSheet(sheetName)
+
+	// Set some cell values
+	file.SetCellValue(sheetName, "A1", "Product ID")
+	file.SetCellValue(sheetName, "B1", "Product Name")
+	file.SetCellValue(sheetName, "C1", "Quantity")
+	file.SetCellValue(sheetName, "D1", "Price")
+	file.SetCellValue(sheetName, "E1", "Total Price")
+	file.SetCellValue(sheetName, "F1", "Order ID")
+	file.SetCellValue(sheetName, "G1", "Payment ID")
+	file.SetCellValue(sheetName, "H1", "Payment Method")
+	file.SetCellValue(sheetName, "I1", "Payment Status")
+	file.SetCellValue(sheetName, "J1", "User ID")
+	file.SetCellValue(sheetName, "K1", "First Name")
+	file.SetCellValue(sheetName, "L1", "Last Name")
+	file.SetCellValue(sheetName, "M1", "Email")
+	file.SetCellValue(sheetName, "N1", "Phone")
+
+	for i, person := range data {
+		row := i + 2
+		file.SetCellValue(sheetName, fmt.Sprintf("A%d", row), person.Productid)
+		file.SetCellValue(sheetName, fmt.Sprintf("B%d", row), person.Productname)
+		file.SetCellValue(sheetName, fmt.Sprintf("C%d", row), person.Quantity)
+		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), person.Price)
+		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), person.Totalprice)
+		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), person.Oid)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), person.Id)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), person.Paymentmethod)
+		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), person.Paymentstatus)
+		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), person.Userid)
+		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), person.Firstname)
+		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), person.Lastname)
+		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), person.Email)
+		file.SetCellValue(sheetName, fmt.Sprintf("N%d", row), person.Phone)
+	}
+
+	// Set the active sheet
+	file.SetActiveSheet(index)
+
+	// Set the content type and headers for the response
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Disposition", "attachment; filename=example.xlsx")
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Expires", "0")
+	c.Header("Cache-Control", "must-revalidate")
+	c.Header("Pragma", "public")
+
+	// Write the Excel file to the response
+	err := file.Write(c.Writer)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+func DownloadPdf(c *gin.Context) {
+	var data []Orderdata
+	DB := config.DBconnect()
+	result1 := DB.Raw("select users.userid, users.firstname, users.lastname, users.email, users.phone, products.productid, products.productname, orderditems.quantity, orderditems.price, orderditems.totalprice, orderditems.oid, payments.id, payments.paymentmethod, payments.paymentstatus from orderditems inner join users on orderditems.uid=users.userid inner join products on products.productid=orderditems.pid inner join orders on orders.orderid=orderditems.oid inner join payments on orders.paymentid=payments.id where payments.paymentstatus = 'successfull'").Scan(&data)
+	if result1.Error != nil {
+		c.JSON(404, gin.H{
+			"Error": result1.Error.Error(),
+		})
+		return
+	}
+	file := excelize.NewFile()
+	sheetName := "Sales Report"
+
+	// Set some cell values
+	file.SetCellValue(sheetName, "A1", "Product ID")
+	file.SetCellValue(sheetName, "B1", "Product Name")
+	file.SetCellValue(sheetName, "C1", "Quantity")
+	file.SetCellValue(sheetName, "D1", "Price")
+	file.SetCellValue(sheetName, "E1", "Total Price")
+	file.SetCellValue(sheetName, "F1", "Order ID")
+	file.SetCellValue(sheetName, "G1", "Payment ID")
+	file.SetCellValue(sheetName, "H1", "Payment Method")
+	file.SetCellValue(sheetName, "I1", "Payment Status")
+	file.SetCellValue(sheetName, "J1", "User ID")
+	file.SetCellValue(sheetName, "K1", "First Name")
+	file.SetCellValue(sheetName, "L1", "Last Name")
+	file.SetCellValue(sheetName, "M1", "Email")
+	file.SetCellValue(sheetName, "N1", "Phone")
+
+	for i, person := range data {
+		row := i + 2
+		file.SetCellValue(sheetName, fmt.Sprintf("A%d", row), person.Productid)
+		file.SetCellValue(sheetName, fmt.Sprintf("B%d", row), person.Productname)
+		file.SetCellValue(sheetName, fmt.Sprintf("C%d", row), person.Quantity)
+		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), person.Price)
+		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), person.Totalprice)
+		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), person.Oid)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), person.Id)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), person.Paymentmethod)
+		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), person.Paymentstatus)
+		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), person.Userid)
+		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), person.Firstname)
+		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), person.Lastname)
+		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), person.Email)
+		file.SetCellValue(sheetName, fmt.Sprintf("N%d", row), person.Phone)
+	}
+
+	// Save the Excel file to a temporary file
+	tempFile, err := ioutil.TempFile("", "excel-*.xlsx")
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+	err = file.SaveAs(tempFile.Name())
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Convert the Excel file to PDF using unoconv
+	cmd := exec.Command("unoconv", "-f", "pdf", tempFile.Name())
+	pdfBytes, err := cmd.Output()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// Serve the PDF file as a download
+	c.Header("Content-Disposition", "attachment; filename=example.pdf")
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+
 }
