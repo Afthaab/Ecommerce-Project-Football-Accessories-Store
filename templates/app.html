@@ -90,7 +90,7 @@ function verifyPayment(res, userid, orderid, coupon) {
         if (response.status) {
           console.log('test success')
           const id=response.paymentid
-          location.href = `/user/success?id=${id}`
+          location.href = `/user/payment/successpage?id=${id}`
         }else {
           console.log('test failed')
           swal({

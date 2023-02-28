@@ -17,125 +17,173 @@ var validate = validator.New()
 
 func Usersignup(c *gin.Context) {
 	var datas models.User
+	opt := (c.Query("otp"))
 
 	if c.Bind(&datas) != nil { //Unmarshelling the Json Data
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
 	Validationerr := validate.Struct(datas) //Validating the struct using Validator Package
 	if Validationerr != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": Validationerr.Error(),
 		})
 		return
 	}
-
-	//validating the email and sending otp
-	otp := initializers.Otpgeneration(datas.Email)
+	var otp string
+	if opt == "email" {
+		//validating the email and sending otp
+		otp = initializers.Otpgeneration(datas.Email)
+	}
+	if opt == "phone" {
+		//validating the phone number
+		otp = initializers.Twilio(datas.Phone)
+	}
 	err := datas.HashPassword(datas.Password)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": err,
 		})
 		return
 	}
-	DB := config.DBconnect()
-	result := DB.Create(&datas)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"message": result.Error.Error(), //404 because record not found
+	// DB := config.DBconnect()
+	result = config.DB.Create(&datas).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": result, //http.StatusNotFound because record not found
 		})
 		return
 	}
 	//setting otp in the db
-	DB.Model(&datas).Where("email LIKE ?", datas.Email).Update("otp", otp)
+	config.DB.Model(&datas).Where("email LIKE ?", datas.Email).Update("otp", otp)
+
+	//Wallet Created
+	walletdata := models.Wallet{
+		Balance:  0,
+		Walletid: datas.Userid,
+	}
+	result = config.DB.Create(&walletdata).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
+		})
+		return
+	}
+
 	//success message
 	c.JSON(202, gin.H{
-		"message": "Go to /signup/otpvalidate", //202 success but there still one more process
+		"Message":  "Success", //202 success but there still one more process
+		"Users ID": datas.Userid,
+		"Email":    datas.Email,
+		"Phone No": datas.Phone,
 	})
 
 }
 
 func Otpvalidate(c *gin.Context) {
-	type Userotp struct {
-		Otp   string
-		Email string
-	}
-	var otpdata Userotp
 	var userdata models.User
-	if c.Bind(&otpdata) != nil {
-		c.JSON(400, gin.H{
+	if c.Bind(&userdata) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Could not bind the JSON Data",
 		})
 		return
 	}
-	DB := config.DBconnect()
-	result := DB.First(&userdata, "otp LIKE ? AND email LIKE ?", otpdata.Otp, otpdata.Email)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	// DB := config.DBconnect()
+	result = config.DB.First(&userdata, "otp LIKE ? AND email LIKE ? AND phone LIKE ?", userdata.Otp, userdata.Email, userdata.Phone).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
-		DB.Last(&userdata).Delete(&userdata)
+		config.DB.Last(&userdata).Delete(&userdata)
 		c.JSON(422, gin.H{
-			"Error":   "Wrong OTP Register Once agian",
-			"Message": "Goto /signup/otpvalidate", //422 Uprocessable entity
+			"Error": "Wrong OTP Register Once agian", //422 Uprocessable entity
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	result = config.DB.Exec("UPDATE users set otpverified = 'true' WHERE email = ?", userdata.Email).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
 		"Message": "New User Successfully Registered",
+		"User Id": userdata.Userid,
+		"Email":   userdata.Email,
 	})
 
 }
 
+type Signin struct {
+	Email    string
+	Password string
+}
+
 func Usersignin(c *gin.Context) {
-	type Signinuser struct {
-		Email    string
-		Password string
-	}
-	var signindata Signinuser
+	var signindata Signin
 	var userdata models.User
 	if c.Bind(&signindata) != nil {
-		c.JSON(404, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"Message": "Could not bind the JSON data",
 		})
 		return
 	}
-	DB := config.DBconnect()
-	result := DB.First(&userdata, "email LIKE ?", signindata.Email)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Message": result.Error.Error(),
+	// DB := config.DBconnect()
+	result = config.DB.First(&userdata, "email LIKE ?", signindata.Email).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Message": result,
 		})
 		return
 	}
 	checkcredential := userdata.CheckPassword(signindata.Password)
 	if checkcredential != nil {
-		c.JSON(404, gin.H{"error": "invalid credentials"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "invalid credentials"})
 		c.Abort()
 		return
 	}
+	if userdata.Otpverified == false {
+		result = config.DB.Exec("DELETE FROM users WHERE email LIKE ?", signindata.Email).Error
+		if result != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Error": result,
+			})
+			return
+		}
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": "User not found",
+		})
+		return
+	}
 	if userdata.Isblocked {
-		c.JSON(404, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"Error": "This user has been blocked by the admin",
 		})
 		return
 	}
 	str := strconv.Itoa(int(userdata.Userid))
-	token := auth.TokenGeneration(str)
+	tokenstring, err := auth.TokenGeneration(str)
+	token := tokenstring["access_token"]
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("UserAuth", token, 36000*24*30, "", "", false, true)
-	c.JSON(200, gin.H{
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.Abort()
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "Success",
 		"User ID": userdata.Userid,
-		"Message": "Goto /home",
 	})
 
 }
+
 func UserSignout(c *gin.Context) {
 	c.SetCookie("UserAuth", "", -1, "", "", false, false)
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Message": "User Successfully Signed Out",
 	})
 }

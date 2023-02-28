@@ -46,18 +46,10 @@ type User struct {
 	Password    string `JSON:"password" gorm:"not null" validate:"required"`
 	Otpverified bool   `JSON:"otpverified" gorm:"default:false"`
 	Isblocked   bool   `JSON:"isblocked" gorm:"default:false"`
+	IsAdmin     bool   `JSON:"isadmin" gorm:"default:false"`
 	Otp         string `JSON:"otp"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-}
-
-type Admin struct {
-	Adminid   uint
-	Firstname string `JSON:"firstname"`
-	Lastname  string `JSON:"lastname"`
-	Email     string `JSON:"email"`
-	Phone     string `JSON:"phone"`
-	Password  string `JSON:"password"`
 }
 
 type Image struct {
@@ -79,7 +71,6 @@ type Product struct {
 	Brandid     uint   `JSON:"brandid"`
 	Size        Size   `gorm:"ForeignKey:Sizeid"`
 	Sizeid      uint   `JSON:"sizeid"`
-	Baseimage   string `JSON:"baseimage"`
 }
 
 type Size struct {
@@ -161,9 +152,8 @@ type Wallet struct {
 	Balance   uint      `json:"balance" gorm:"not null"`
 	User      User      `gorm:"ForeignKey:walletid"`
 	Walletid  uint      `json:"walletid" gorm:"not null"`
-	Orders    Orders    `gorm:"ForeignKey:Oid"`
-	Oid       uuid.UUID `json:"oid" gorm:"not null"`
 	CreatedAt time.Time `gorm:"default:NOW()"`
+	UpdatedAt time.Time
 }
 
 type Wishlist struct {

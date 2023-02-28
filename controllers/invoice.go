@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 
 	"text/template"
@@ -108,42 +106,42 @@ func GenerateInvoice(c *gin.Context) {
 	var orderdatas models.Orders
 	var billingdata models.Payment
 	var itemsdata []models.Product
-	DB := config.DBconnect()
-	result := DB.Raw("SELECT * FROM users WHERE userid = ?", uid).Scan(&userdatas)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	// DB := config.DBconnect()
+	result = config.DB.Raw("SELECT * FROM users WHERE userid = ?", uid).Scan(&userdatas).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
 
-	result1 := DB.Raw("SELECT * FROM orders WHERE orderid = ?", oid).Scan(&orderdatas)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result1.Error.Error(),
+	result = config.DB.Raw("SELECT * FROM orders WHERE orderid = ?", oid).Scan(&orderdatas).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
 
-	result2 := DB.Raw("SELECT * FROM addresses WHERE addressid = ?", orderdatas.Addid).Scan(&addressdatas)
-	if result2.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result2.Error.Error(),
+	result = config.DB.Raw("SELECT * FROM addresses WHERE addressid = ?", orderdatas.Addid).Scan(&addressdatas).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
 
-	result3 := DB.Raw("SELECT * FROM payments WHERE id = ?", orderdatas.Paymentid).Scan(&billingdata)
-	if result3.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result3.Error.Error(),
+	result = config.DB.Raw("SELECT * FROM payments WHERE id = ?", orderdatas.Paymentid).Scan(&billingdata).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
-	result4 := DB.Raw("SELECT products.* from orderditems inner join products on orderditems.pid=products.productid  WHERE oid = ?", oid).Scan(&itemsdata)
-	if result4.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result4.Error.Error(),
+	result = config.DB.Raw("SELECT products.* from orderditems inner join products on orderditems.pid=products.productid  WHERE oid = ?", oid).Scan(&itemsdata).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
@@ -187,7 +185,7 @@ func GenerateInvoice(c *gin.Context) {
 	}
 	templatepage, err := template.New("invoice").Parse(invoiceTemplate)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": err,
 		})
 		return
@@ -195,8 +193,8 @@ func GenerateInvoice(c *gin.Context) {
 	var buf bytes.Buffer
 	err = templatepage.Execute(&buf, invoice)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": err,
 		})
 		return
 	}
@@ -204,12 +202,12 @@ func GenerateInvoice(c *gin.Context) {
 	cmd.Stdin = &buf
 	err = cmd.Run()
 	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": err,
 		})
 		return
 	}
-	c.HTML(200, "invoice.html", gin.H{})
+	c.HTML(http.StatusOK, "invoice.html", gin.H{})
 }
 func InvoiceDownload(c *gin.Context) {
 	c.Header("Content-Disposition", "attachment; filename=invoice.pdf")
@@ -236,11 +234,11 @@ type Orderdata struct {
 
 func DownloadExcel(c *gin.Context) {
 	var data []Orderdata
-	DB := config.DBconnect()
-	result1 := DB.Raw("select users.userid, users.firstname, users.lastname, users.email, users.phone, products.productid, products.productname, orderditems.quantity, orderditems.price, orderditems.totalprice, orderditems.oid, payments.id, payments.paymentmethod, payments.paymentstatus from orderditems inner join users on orderditems.uid=users.userid inner join products on products.productid=orderditems.pid inner join orders on orders.orderid=orderditems.oid inner join payments on orders.paymentid=payments.id where payments.paymentstatus = 'successfull'").Scan(&data)
-	if result1.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result1.Error.Error(),
+	// DB := config.DBconnect()
+	result = config.DB.Raw("select users.userid, users.firstname, users.lastname, users.email, users.phone, products.productid, products.productname, orderditems.quantity, orderditems.price, orderditems.totalprice, orderditems.oid, payments.id, payments.paymentmethod, payments.paymentstatus from orderditems inner join users on orderditems.uid=users.userid inner join products on products.productid=orderditems.pid inner join orders on orders.orderid=orderditems.oid inner join payments on orders.paymentid=payments.id where payments.paymentstatus = 'successfull'").Scan(&data).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
@@ -299,77 +297,4 @@ func DownloadExcel(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-func DownloadPdf(c *gin.Context) {
-	var data []Orderdata
-	DB := config.DBconnect()
-	result1 := DB.Raw("select users.userid, users.firstname, users.lastname, users.email, users.phone, products.productid, products.productname, orderditems.quantity, orderditems.price, orderditems.totalprice, orderditems.oid, payments.id, payments.paymentmethod, payments.paymentstatus from orderditems inner join users on orderditems.uid=users.userid inner join products on products.productid=orderditems.pid inner join orders on orders.orderid=orderditems.oid inner join payments on orders.paymentid=payments.id where payments.paymentstatus = 'successfull'").Scan(&data)
-	if result1.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result1.Error.Error(),
-		})
-		return
-	}
-	file := excelize.NewFile()
-	sheetName := "Sales Report"
-
-	// Set some cell values
-	file.SetCellValue(sheetName, "A1", "Product ID")
-	file.SetCellValue(sheetName, "B1", "Product Name")
-	file.SetCellValue(sheetName, "C1", "Quantity")
-	file.SetCellValue(sheetName, "D1", "Price")
-	file.SetCellValue(sheetName, "E1", "Total Price")
-	file.SetCellValue(sheetName, "F1", "Order ID")
-	file.SetCellValue(sheetName, "G1", "Payment ID")
-	file.SetCellValue(sheetName, "H1", "Payment Method")
-	file.SetCellValue(sheetName, "I1", "Payment Status")
-	file.SetCellValue(sheetName, "J1", "User ID")
-	file.SetCellValue(sheetName, "K1", "First Name")
-	file.SetCellValue(sheetName, "L1", "Last Name")
-	file.SetCellValue(sheetName, "M1", "Email")
-	file.SetCellValue(sheetName, "N1", "Phone")
-
-	for i, person := range data {
-		row := i + 2
-		file.SetCellValue(sheetName, fmt.Sprintf("A%d", row), person.Productid)
-		file.SetCellValue(sheetName, fmt.Sprintf("B%d", row), person.Productname)
-		file.SetCellValue(sheetName, fmt.Sprintf("C%d", row), person.Quantity)
-		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), person.Price)
-		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), person.Totalprice)
-		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), person.Oid)
-		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), person.Id)
-		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), person.Paymentmethod)
-		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), person.Paymentstatus)
-		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), person.Userid)
-		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), person.Firstname)
-		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), person.Lastname)
-		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), person.Email)
-		file.SetCellValue(sheetName, fmt.Sprintf("N%d", row), person.Phone)
-	}
-
-	// Save the Excel file to a temporary file
-	tempFile, err := ioutil.TempFile("", "excel-*.xlsx")
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-	err = file.SaveAs(tempFile.Name())
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	// Convert the Excel file to PDF using unoconv
-	cmd := exec.Command("unoconv", "-f", "pdf", tempFile.Name())
-	pdfBytes, err := cmd.Output()
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	// Serve the PDF file as a download
-	c.Header("Content-Disposition", "attachment; filename=example.pdf")
-	c.Data(http.StatusOK, "application/pdf", pdfBytes)
-
 }

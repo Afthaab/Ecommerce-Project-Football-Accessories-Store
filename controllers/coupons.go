@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -14,29 +15,30 @@ func AddCoupon(c *gin.Context) {
 	var coupondata models.Coupon
 	err := c.Bind(&coupondata)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": err,
 		})
 		return
 	}
+
 	//checking if the entered date is valid or not
 	now := time.Now()
 	if coupondata.Expirationdate.Before(now) {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Please enter a valid date",
 		})
 		return
 	}
-	DB := config.DBconnect()
+
 	//creating the new coupon
-	result := DB.Create(&coupondata).Error
+	result = config.DB.Create(&coupondata).Error
 	if result != nil {
-		c.JSON(400, gin.H{
-			"Error": result.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Message":         "Successfully created the coupon",
 		"Coupon id":       coupondata.ID,
 		"Expiration date": coupondata.Expirationdate,
@@ -46,36 +48,37 @@ func AddCoupon(c *gin.Context) {
 func ViewCoupons(c *gin.Context) {
 	cid, _ := uuid.FromString(c.Query("couponid"))
 	var coupondata []models.Coupon
-	DB := config.DBconnect()
+
 	//checking and updating the expired coupon status to false
-	result := DB.Exec("UPDATE coupons SET isactive = false WHERE expirationdate < NOW()")
-	if err := result.Error; err != nil {
-		c.JSON(400, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Exec("UPDATE coupons SET isactive = false WHERE expirationdate < NOW()").Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
+
 	//searching  a partiuclar coupon through id from the query params
 	if cid != uuid.Nil {
-		result1 := DB.Raw("SELECT * FROM coupons WHERE id = ?", cid).Scan(&coupondata).Error
-		if result1 != nil {
-			c.JSON(404, gin.H{
-				"Error": result1.Error(),
+		result = config.DB.Raw("SELECT * FROM coupons WHERE id = ?", cid).Scan(&coupondata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
 
 	} else { //showing all coupons
-		result1 := DB.Raw("SELECT * FROM coupons").Scan(&coupondata).Error
-		if result1 != nil {
-			c.JSON(404, gin.H{
-				"Error": result1.Error(),
+		result = config.DB.Raw("SELECT * FROM coupons").Scan(&coupondata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
 
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Coupons": coupondata,
 	})
 
@@ -86,57 +89,61 @@ func RedeemCoupon(c *gin.Context) {
 	var paymentdata models.Payment
 	err := c.Bind(&coupondata)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": err,
 		})
 		return
 	}
-	DB := config.DBconnect()
+
 	//checking the coupon is used or not
-	result := DB.First(&paymentdata, " couponid = ?", coupondata.ID)
-	if result.Error != nil {
+	result = config.DB.First(&paymentdata, " couponid = ? AND useridno = ?", coupondata.ID, id).Error
+	if result != nil {
 		//getting the coupon data
-		result1 := DB.Raw("SELECT * from coupons WHERE id = ?", coupondata.ID).Scan(&coupondata)
-		if result1.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result1.Error,
+		result = config.DB.Raw("SELECT * from coupons WHERE id = ?", coupondata.ID).Scan(&coupondata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
 		var amount uint
+
 		//getting the totalprice from the cart
-		result := DB.Raw("SELECT sum(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("SELECT sum(totalprice) FROM carts WHERE cartid = ?", id).Scan(&amount).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
+
 		//checking the minimum amount to apply the coupon
 		if amount < coupondata.Minamount {
-			c.JSON(404, gin.H{
+			c.JSON(http.StatusNotFound, gin.H{
 				"Minimun amount to redeem a coupon is ": coupondata.Minamount,
 			})
 			return
 		}
+
 		//checking the expiration of the coupon
 		now := time.Now()
 		if coupondata.Expirationdate.Before(now) {
-			c.JSON(400, gin.H{
+			c.JSON(http.StatusNotFound, gin.H{
 				"Error": "Coupon has Expired",
 			})
 			return
 		}
+
 		//applying the discount
 		final := amount - ((amount * coupondata.Discount) / 100)
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"Message":           "Success",
 			"discounted Amount": final,
 			"Coupon ID":         coupondata.ID,
 		})
 
 	} else {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Message": "Coupon alredy used by the user",
 		})
 	}
@@ -147,7 +154,7 @@ func EditCoupon(c *gin.Context) {
 	var coupondata models.Coupon
 	err := c.Bind(&coupondata)
 	if err != nil {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": err,
 		})
 		return
@@ -155,21 +162,20 @@ func EditCoupon(c *gin.Context) {
 	//checking if the entered date is valid or not
 	now := time.Now()
 	if coupondata.Expirationdate.Before(now) {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Please enter a valid date",
 		})
 		return
 	}
 	//updating the coupon
-	DB := config.DBconnect()
-	result := DB.Model(&coupondata).Where("id = ?", cid).Updates(models.Coupon{Couponame: coupondata.Couponame, Minamount: coupondata.Minamount, Discount: coupondata.Discount, Expirationdate: coupondata.Expirationdate, Isactive: coupondata.Isactive})
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Model(&coupondata).Where("id = ?", cid).Updates(models.Coupon{Couponame: coupondata.Couponame, Minamount: coupondata.Minamount, Discount: coupondata.Discount, Expirationdate: coupondata.Expirationdate, Isactive: coupondata.Isactive}).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Message":          "Coupon Updated Successfully",
 		"Id":               cid,
 		"Coupon Name":      coupondata.Couponame,
@@ -181,16 +187,16 @@ func EditCoupon(c *gin.Context) {
 }
 func DeleteCoupon(c *gin.Context) {
 	cid, _ := uuid.FromString(c.Query("couponid"))
-	DB := config.DBconnect()
+
 	//deleting the coupon
-	result := DB.Delete(&models.Coupon{}, " id = ?", cid)
-	if result.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Delete(&models.Coupon{}, " id = ?", cid).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Message": "Successfully Deleted",
 	})
 

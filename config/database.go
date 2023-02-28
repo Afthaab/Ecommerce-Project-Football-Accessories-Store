@@ -9,15 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func DBconnect() *gorm.DB {
+var DB *gorm.DB
+
+func DBconnect() {
+	var err error
 	dns := os.Getenv("DB_URL")
-	DB, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(dns), &gorm.Config{})
 	if err != nil {
 		fmt.Println("Error Connecting to the base")
 	}
 	DB.AutoMigrate(
 		&models.User{},
-		&models.Admin{},
 		&models.Address{},
 		&models.Brand{},
 		&models.Team{},
@@ -33,5 +35,4 @@ func DBconnect() *gorm.DB {
 		&models.Wallet{},
 		&models.Wishlist{},
 	)
-	return DB
 }

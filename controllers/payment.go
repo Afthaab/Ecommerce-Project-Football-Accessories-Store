@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -17,47 +18,46 @@ func CashOnDevlivery(c *gin.Context) {
 	amount, _ := strconv.Atoi(c.Query("amount"))
 	cid, _ := uuid.Parse(c.Query("couponid"))
 	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": err,
 		})
+		return
 	}
-	DB := config.DBconnect()
-	method := "Cash on Delivery"
-	status := "pending"
+
 	paymentdata := models.Payment{
 		Totalamount:   uint(amount),
-		Paymentmethod: method,
+		Paymentmethod: "Cash on Delivery",
 		Useridno:      uint(id),
-		Paymentstatus: status,
+		Paymentstatus: "pending",
 		Razorpayid:    "",
 	}
 	if cid != uuid.Nil {
 		paymentdata.Couponid = cid
 	}
 
-	result := DB.Create(&paymentdata).Error
+	result = config.DB.Create(&paymentdata).Error
 	if result != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Paymennt Id": paymentdata.ID,
 		"Message":     "Order Placed Succesfully",
 	})
 
 }
 func Razorpay(c *gin.Context) {
-	id, err := strconv.Atoi(c.GetString("userid"))
+	id, _ := strconv.Atoi(c.GetString("userid"))
 	cid, _ := uuid.Parse(c.Query("couponid"))
 	amount, _ := strconv.Atoi(c.Query("amount"))
-	DB := config.DBconnect()
+	// DB := config.DBconnect()
 	var userdata models.User
-	result := DB.Raw("SELECT * FROM users WHERE userid = ?", id).Scan(&userdata)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Raw("SELECT * FROM users WHERE userid = ?", id).Scan(&userdata).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
@@ -71,13 +71,13 @@ func Razorpay(c *gin.Context) {
 	}
 	body, err := client.Order.Create(data, nil)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": err,
 		})
 		return
 	}
 	value := body["id"]
-	c.HTML(200, "app.html", gin.H{
+	c.HTML(http.StatusOK, "app.html", gin.H{
 		"userid":      userdata.Userid,
 		"totalprice":  amount,
 		"total":       razpayvalue,
@@ -103,11 +103,11 @@ func RazorpaySuccess(c *gin.Context) {
 		RazorPayOrderID: orderid,
 		AmountPaid:      totalamount,
 	}
-	DB := config.DBconnect()
-	result := DB.Create(&Rpay)
-	if result.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result.Error.Error(),
+	// DB := config.DBconnect()
+	result = config.DB.Create(&Rpay).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
@@ -122,16 +122,15 @@ func RazorpaySuccess(c *gin.Context) {
 		Couponid:      cid,
 	}
 	fmt.Println(cid)
-	result1 := DB.Create(&paymentdata)
-	if result1.Error != nil {
-		c.JSON(400, gin.H{
-			"Error": result1.Error.Error(),
+	result = config.DB.Create(&paymentdata).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
 		})
 		return
 	}
 	pid := paymentdata.ID
-	c.JSON(200, gin.H{
-
+	c.JSON(http.StatusOK, gin.H{
 		"status":    true,
 		"paymentid": pid,
 	})
@@ -139,8 +138,57 @@ func RazorpaySuccess(c *gin.Context) {
 }
 func Success(c *gin.Context) {
 	pid, _ := strconv.Atoi(c.Query("id"))
-	c.HTML(200, "success.html", gin.H{
+	c.HTML(http.StatusOK, "success.html", gin.H{
 		"paymentid": pid,
 	})
 
+}
+
+func WalletPayment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.GetString("userid"))
+	amount, _ := strconv.Atoi(c.Query("amount"))
+	cid, _ := uuid.Parse(c.Query("couponid"))
+	var walletdata models.Wallet
+	result = config.DB.Raw("select * from wallets where walletid = ?", id).Scan(&walletdata).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
+		})
+		return
+	}
+	if walletdata.Balance < uint(amount) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error":          "Insufficeint Balance in the Wallet",
+			"Wallet Balance": walletdata.Balance,
+		})
+		return
+	}
+	paymentdata := models.Payment{
+		Totalamount:   uint(amount),
+		Paymentmethod: "Wallet",
+		Useridno:      uint(id),
+		Paymentstatus: "Successfull",
+		Razorpayid:    "",
+	}
+	if cid != uuid.Nil {
+		paymentdata.Couponid = cid
+	}
+	result = config.DB.Create(&paymentdata).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
+		})
+		return
+	}
+	result = config.DB.Exec("update wallets set balance= balance - ? where walletid = ?", amount, id).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"Paymennt Id": paymentdata.ID,
+		"Message":     "Payment Succesfull",
+	})
 }

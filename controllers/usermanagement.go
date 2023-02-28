@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
@@ -19,27 +20,27 @@ type Viewdata struct {
 func Adminviewuser(c *gin.Context) {
 	searchid, _ := strconv.Atoi(c.Query("userid"))
 	var userdata []Viewdata
-	DB := config.DBconnect()
+	// DB := config.DBconnect()
 	if searchid == 0 {
-		result := DB.Raw("SELECT userid,firstname,lastname,email,phone,isblocked FROM users ORDER BY userid ASC").Scan(&userdata)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("SELECT userid,firstname,lastname,email,phone,isblocked FROM users ORDER BY userid ASC").Scan(&userdata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
 	} else {
-		result := DB.Raw("SELECT userid,firstname,lastname,email,phone,isblocked FROM users WHERE userid = ?", searchid).Scan(&userdata)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("SELECT userid,firstname,lastname,email,phone,isblocked FROM users WHERE userid = ?", searchid).Scan(&userdata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
 
 	}
 
-	c.JSON(200, gin.H{"user": userdata})
+	c.JSON(http.StatusOK, gin.H{"user": userdata})
 
 }
 
@@ -47,29 +48,29 @@ func UserManagement(c *gin.Context) {
 	searchid := c.Query("userid")
 	status := c.Query("status")
 	var userdata Viewdata
-	DB := config.DBconnect()
+	// DB := config.DBconnect()
 	if status == "block" {
-		result := DB.Raw("UPDATE users SET isblocked = true WHERE userid = ?", searchid).Scan(&userdata)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("UPDATE users SET isblocked = true WHERE userid = ?", searchid).Scan(&userdata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"Message": "Successfully blocked the User",
 		})
 
 	}
 	if status == "unblock" {
-		result := DB.Raw("UPDATE users SET isblocked = false WHERE userid = ?", searchid).Scan(&userdata)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("UPDATE users SET isblocked = false WHERE userid = ?", searchid).Scan(&userdata).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"Error": result,
 			})
 			return
 		}
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"Message": "Successfully Unblocked the User",
 		})
 	}

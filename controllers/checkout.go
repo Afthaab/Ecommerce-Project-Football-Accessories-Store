@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
@@ -10,12 +11,7 @@ import (
 func CheckOut(c *gin.Context) {
 	ViewCart(c)
 
-	id, err := strconv.Atoi(c.GetString("userid"))
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
-		})
-	}
+	id, _ := strconv.Atoi(c.GetString("userid"))
 	type addressdata struct {
 		Name     string
 		Phoneno  string
@@ -29,26 +25,25 @@ func CheckOut(c *gin.Context) {
 		Country  string
 	}
 	var datas []addressdata
-	DB := config.DBconnect()
-	result := DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE defaultadd = true AND uid = ?", id).Scan(&datas)
-	if result.Error != nil {
-		c.JSON(404, gin.H{
+	result = config.DB.Raw("SELECT name, phoneno, houseno, area, landmark, city, pincode,district, state, country FROM addresses WHERE defaultadd = true AND uid = ?", id).Scan(&datas).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
 			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Default Address": datas,
 	})
 	var totalPrice uint
-	result1 := DB.Table("carts").Where("cartid = ?", id).Select("SUM(totalprice)").Scan(&totalPrice).Error
-	if result1 != nil {
-		c.JSON(400, gin.H{
-			"Error": "Bad Request",
+	result = config.DB.Table("carts").Where("cartid = ?", id).Select("SUM(totalprice)").Scan(&totalPrice).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"Total Price": totalPrice,
 	})
 

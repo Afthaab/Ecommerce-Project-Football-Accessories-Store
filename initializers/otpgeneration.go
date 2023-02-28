@@ -3,13 +3,16 @@ package initializers
 import (
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/twilio/twilio-go"
+	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 	gomail "gopkg.in/mail.v2"
 )
 
-func genCaptchaCode() (string, error) {
+func GenCaptchaCode() (string, error) {
 	codes := make([]byte, 6)
 	if _, err := rand.Read(codes); err != nil {
 		return "", err
@@ -35,7 +38,7 @@ func Otpgeneration(emails string) string {
 	m.SetHeader("Subject", "OTP to verify your Gmail")
 
 	//otp generation
-	onetimepassword, err := genCaptchaCode()
+	onetimepassword, err := GenCaptchaCode()
 	if err != nil {
 		panic(err)
 	}
@@ -59,4 +62,30 @@ func Otpgeneration(emails string) string {
 	}
 	return onetimepassword
 
+}
+
+func Twilio(phone string) string {
+	fmt.Println("hi")
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: os.Getenv("ACCOUNT_SID"),
+		Password: os.Getenv("AUTH_TOKEN"),
+	})
+	onetimepassword, err := GenCaptchaCode()
+	if err != nil {
+		panic(err)
+	}
+	params := &twilioApi.CreateMessageParams{}
+	params.SetTo("+919741968809")
+	params.SetFrom("+12706389186")
+	params.SetBody(onetimepassword + "is your OTP to register to our site. Thank you registering to our site. Happy Shopping :) " + phone)
+
+	resp, err := client.Api.CreateMessage(params)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		response, _ := json.Marshal(*resp)
+		fmt.Println("Response: " + string(response))
+	}
+
+	return onetimepassword
 }

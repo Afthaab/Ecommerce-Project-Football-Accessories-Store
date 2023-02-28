@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/afthab/e_commerce/config"
@@ -8,31 +9,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var result error
+
 func AddAddress(c *gin.Context) {
-	id, err := strconv.Atoi(c.GetString("userid"))
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
-		})
-	}
+	id, _ := strconv.Atoi(c.GetString("userid"))
 	var addressdata models.Address
 	if c.Bind(&addressdata) != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{ //400
 			"Error": "Error in Binding the JSON",
 		})
 	}
-	DB := config.DBconnect()
-	DB.Model(&addressdata).Where("uid = ?", id).Update("defaultadd", false)
-	addressdata.Uid = uint(id)
-	result := DB.Create(&addressdata)
-	if result.Error != nil {
-		c.JSON(500, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Model(&addressdata).Where("uid = ?", id).Update("defaultadd", false).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{ //404
+			"Error": result,
 		})
 		return
 	}
-	DB.Model(&addressdata).Where("addressid = ?", addressdata.Addressid).Update("defaultadd", true)
-	c.JSON(200, gin.H{
+	addressdata.Uid = uint(id)
+	result = config.DB.Create(&addressdata).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{ //400
+			"Error": result,
+		})
+		return
+	}
+	result = config.DB.Model(&addressdata).Where("addressid = ?", addressdata.Addressid).Update("defaultadd", true).Error
+	if result != nil {
+		c.JSON(http.StatusNotFound, gin.H{ //400
+			"Error": result,
+		})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{ //201
 		"Message":         "Address added succesfully",
 		"Address ID":      addressdata.Addressid,
 		"Default Address": addressdata.Defaultadd,
@@ -41,12 +50,7 @@ func AddAddress(c *gin.Context) {
 }
 func ShowAddress(c *gin.Context) {
 	searchid, _ := strconv.Atoi(c.Query("addressid"))
-	id, err := strconv.Atoi(c.GetString("userid"))
-	if err != nil {
-		c.JSON(400, gin.H{
-			"Error": "Error in string conversion",
-		})
-	}
+	id, _ := strconv.Atoi(c.GetString("userid"))
 
 	type addressdata struct {
 		Addressid  uint
@@ -63,25 +67,24 @@ func ShowAddress(c *gin.Context) {
 		Defaultadd bool
 	}
 	var datas []addressdata
-	DB := config.DBconnect()
 	if searchid != 0 {
-		result1 := DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ? AND addressid = ?", id, searchid).Scan(&datas)
-		if result1.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result1.Error.Error(),
+		result = config.DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ? AND addressid = ?", id, searchid).Scan(&datas).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{ //404
+				"Error": result,
 			})
 			return
 		}
 	} else {
-		result := DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ?", id).Scan(&datas)
-		if result.Error != nil {
-			c.JSON(404, gin.H{
-				"Error": result.Error.Error(),
+		result = config.DB.Raw("SELECT addressid,name, phoneno, houseno, area, landmark, city, pincode,district, state, country, defaultadd FROM addresses WHERE uid = ?", id).Scan(&datas).Error
+		if result != nil {
+			c.JSON(http.StatusNotFound, gin.H{ //404
+				"Error": result,
 			})
 			return
 		}
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{ //200
 		"User Addresses": datas,
 	})
 
@@ -91,28 +94,21 @@ func EditAddress(c *gin.Context) {
 	addressid := c.Query("addressid")
 	var addressdata models.Address
 	if c.Bind(&addressdata) != nil {
-		c.JSON(404, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{ //400
 			"Error": "Error in binding JSON data",
 		})
 		return
 	}
-	str, err := strconv.Atoi(addressid)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"Error": err,
-		})
-		return
-	}
+	str, _ := strconv.Atoi(addressid)
 	addressdata.Addressid = uint(str)
-	DB := config.DBconnect()
-	result := DB.Model(&addressdata).Updates(models.Address{Name: addressdata.Name, Phoneno: addressdata.Phoneno, Houseno: addressdata.Houseno, Area: addressdata.Area, Landmark: addressdata.Landmark, City: addressdata.City, Pincode: addressdata.Pincode, District: addressdata.District, State: addressdata.State, Country: addressdata.Country})
-	if result.Error != nil {
-		c.JSON(404, gin.H{
-			"Error": result.Error.Error(),
+	result = config.DB.Model(&addressdata).Updates(models.Address{Name: addressdata.Name, Phoneno: addressdata.Phoneno, Houseno: addressdata.Houseno, Area: addressdata.Area, Landmark: addressdata.Landmark, City: addressdata.City, Pincode: addressdata.Pincode, District: addressdata.District, State: addressdata.State, Country: addressdata.Country}).Error
+	if result != nil {
+		c.JSON(http.StatusBadRequest, gin.H{ //400
+			"Error": result,
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{ //200
 		"Message":         "Successfully Updated the Address",
 		"Address ID":      addressdata.Addressid,
 		"Default Address": addressdata.Defaultadd,

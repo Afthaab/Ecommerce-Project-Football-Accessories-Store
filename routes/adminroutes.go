@@ -12,44 +12,68 @@ func Adminroutes(r *gin.Engine) {
 		//admin routes
 		admin.POST("/signin", controllers.Adminsignin)
 		admin.GET("/signout", middlewares.AdminAuth, controllers.AdminSignout)
-		admin.GET("/adminpanel", middlewares.AdminAuth, controllers.Adminpanel)
-		admin.GET("/profilepage", middlewares.AdminAuth, controllers.AdminProfilepage)
+
+		//admin panel routes
+		adminpanel := admin.Group("/adminpanel")
+		{
+			adminpanel.GET("/", middlewares.AdminAuth, controllers.Adminpanel)
+			adminpanel.GET("/salesreport/downloadexcel", middlewares.AdminAuth, controllers.DownloadExcel)
+			adminpanel.GET("/profilepage", middlewares.AdminAuth, controllers.AdminProfilepage)
+		}
 
 		//user management routes
-		admin.GET("/user/view", middlewares.AdminAuth, controllers.Adminviewuser)
-		admin.PUT("/user/block/unblock", middlewares.AdminAuth, controllers.UserManagement)
+		user := admin.Group("/user")
+		{
+			user.GET("/view", middlewares.AdminAuth, controllers.Adminviewuser)
+			user.PUT("/block/unblock", middlewares.AdminAuth, controllers.UserManagement)
+		}
 
 		//specification management routes
-		admin.POST("/brands/add", middlewares.AdminAuth, controllers.AddBrands)
-		admin.GET("/brands/view", middlewares.AdminAuth, controllers.ViewSearchBrands)
-		admin.PUT("/brands/view/edit", middlewares.AdminAuth, controllers.Editbrands)
+		brands := admin.Group("/brands")
+		{
+			brands.POST("/add", middlewares.AdminAuth, controllers.AddBrands)
+			brands.GET("/view", middlewares.AdminAuth, controllers.ViewSearchBrands)
+			brands.PUT("/view/edit", middlewares.AdminAuth, controllers.Editbrands)
+		}
 
-		admin.POST("/sizes/add", middlewares.AdminAuth, controllers.AddSize)
-		admin.GET("/sizes/view", middlewares.AdminAuth, controllers.ViewSearchsize)
-		admin.PUT("/sizes/view/edit", middlewares.AdminAuth, controllers.Editsizes)
+		sizes := admin.Group("/sizes")
+		{
+			sizes.POST("/add", middlewares.AdminAuth, controllers.AddSize)
+			sizes.GET("/view", middlewares.UserAuth, controllers.ViewSearchsize)
+			sizes.PUT("/view/edit", middlewares.AdminAuth, controllers.Editsizes)
 
-		admin.POST("/teams/add", middlewares.AdminAuth, controllers.AddTeams)
-		admin.GET("/teams/view", middlewares.AdminAuth, controllers.ViewSearchteams)
-		admin.PUT("/teams/view/edit", middlewares.AdminAuth, controllers.Editteams)
+		}
+		teams := admin.Group("/teams")
+		{
+			teams.POST("/add", middlewares.AdminAuth, controllers.AddTeams)
+			teams.GET("/view", middlewares.AdminAuth, controllers.ViewSearchteams)
+			teams.PUT("/view/edit", middlewares.AdminAuth, controllers.Editteams)
+
+		}
 
 		//product management
-		admin.POST("/products/add", middlewares.AdminAuth, controllers.Addproducts)
-		admin.POST("/products/add/images", middlewares.AdminAuth, controllers.AddImages)
+		products := admin.Group("/products")
+		{
+			products.POST("/add", middlewares.AdminAuth, controllers.Addproducts)
+			products.POST("/add/images", middlewares.AdminAuth, controllers.AddImages)
+		}
 
 		//coupon routes
-		admin.POST("/coupon/add", middlewares.AdminAuth, controllers.AddCoupon)
-		admin.GET("/coupon/view", middlewares.AdminAuth, controllers.ViewCoupons)
-		admin.PUT("/coupon/view/edit", middlewares.AdminAuth, controllers.EditCoupon)
-		admin.DELETE("/coupon/view/delete", middlewares.AdminAuth, controllers.DeleteCoupon)
+		coupon := admin.Group("/coupon")
+		{
+			coupon.POST("/add", middlewares.AdminAuth, controllers.AddCoupon)
+			coupon.GET("/view", middlewares.AdminAuth, controllers.ViewCoupons)
+			coupon.PUT("/view/edit", middlewares.AdminAuth, controllers.EditCoupon)
+			coupon.DELETE("/view/delete", middlewares.AdminAuth, controllers.DeleteCoupon)
+		}
 
 		//order Management
-		admin.GET("/order/view/search", middlewares.AdminAuth, controllers.AdminOrderView)
-		admin.PUT("/order/cancel", middlewares.AdminAuth, controllers.CancelOrder)
-		admin.PUT("/order/statusupdate", middlewares.AdminAuth, controllers.StatusUpdate)
-		admin.PUT("/order/return", middlewares.AdminAuth, controllers.ReturnAccepted)
-
-		//excel
-		admin.GET("/order/salesreport/download/excel", controllers.DownloadExcel)
-		admin.GET("/order/salesreport/download/pdf", controllers.DownloadPdf)
+		order := admin.Group("/order")
+		{
+			order.GET("/view/search", middlewares.AdminAuth, controllers.AdminOrderView)
+			order.PUT("/cancel", middlewares.AdminAuth, controllers.CancelOrder)
+			order.PUT("/statusupdate", middlewares.AdminAuth, controllers.StatusUpdate)
+			order.PUT("/return", middlewares.AdminAuth, controllers.ReturnAccepted)
+		}
 	}
 }
