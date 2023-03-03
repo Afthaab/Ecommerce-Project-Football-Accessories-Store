@@ -46,7 +46,11 @@ go run main.go
 ## API Platform Used
 API platforms Postman is used to run all the API's Provided by this project
 
-### API Documentation
+#### API Documentation
+```
+https://documenter.getpostman.com/view/25380689/2s93CUJVxP
+```
+#### Database Design
 ```
 https://documenter.getpostman.com/view/25380689/2s93CUJVxP
 ```
