@@ -39,7 +39,7 @@ func Adminroutes(r *gin.Engine) {
 		sizes := admin.Group("/sizes")
 		{
 			sizes.POST("/add", middlewares.AdminAuth, controllers.AddSize)
-			sizes.GET("/view", middlewares.UserAuth, controllers.ViewSearchsize)
+			sizes.GET("/view", middlewares.AdminAuth, controllers.ViewSearchsize)
 			sizes.PUT("/view/edit", middlewares.AdminAuth, controllers.Editsizes)
 
 		}
