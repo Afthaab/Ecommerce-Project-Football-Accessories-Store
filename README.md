@@ -52,5 +52,5 @@ https://documenter.getpostman.com/view/25380689/2s93CUJVxP
 ```
 #### Database Design
 ```
-https://documenter.getpostman.com/view/25380689/2s93CUJVxP
+https://footballestoreimagebucket.s3.ap-south-1.amazonaws.com/drawSQL-e-commerce-db-export-2023-03-06.png
 ```
