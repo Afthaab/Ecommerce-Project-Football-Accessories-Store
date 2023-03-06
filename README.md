@@ -51,6 +51,7 @@ API platforms Postman is used to run all the API's Provided by this project
 https://documenter.getpostman.com/view/25380689/2s93CUJVxP
 ```
 #### Database Design
+Databse is designed using draw SQL website
 ```
 https://footballestoreimagebucket.s3.ap-south-1.amazonaws.com/drawSQL-e-commerce-db-export-2023-03-06.png
 ```
