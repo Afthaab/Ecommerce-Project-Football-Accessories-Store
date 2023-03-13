@@ -1,5 +1,10 @@
 # Ecommerce-Project-Football-Accessories-Store
 This project is written purely in Go Language. Gin (Http Web Frame Work) is used in this project. PostgreSQL Database is used to manage the data.
+##API Integrated in Flutter
+This Rest API has been implemented in Flutter. Included the screen shot and code below.
+```
+https://footballestoreimagebucket.s3.ap-south-1.amazonaws.com/Screenshot+2023-03-13+104513.png
+```
 ## Framework Used
 Gin-Gonic: This whole project is built on Gin frame work. Its is a popular http web frame work. 
 ```
