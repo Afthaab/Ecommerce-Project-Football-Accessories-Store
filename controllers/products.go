@@ -122,6 +122,8 @@ type productdata struct {
 	Productid   string
 	Productname string
 	Price       uint
+	Imageid     string
+	Stock       uint
 }
 
 func ViewProducts(c *gin.Context) {

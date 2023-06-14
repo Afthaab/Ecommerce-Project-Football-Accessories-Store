@@ -71,6 +71,7 @@ type Product struct {
 	Brandid     uint   `JSON:"brandid"`
 	Size        Size   `gorm:"ForeignKey:Sizeid"`
 	Sizeid      uint   `JSON:"sizeid"`
+	Imageid     string `gorm:"imageid"`
 }
 
 type Size struct {
